@@ -1,0 +1,32 @@
+<div className='px-10 py-7 '>
+      <img src="src\assets\images\logo2.svg" alt="" className="h-8 w-auto" /> {/* Ajusta tamanho da logo */}
+    </div>
+    <Separator/>
+
+
+
+
+
+import { useState } from 'react'
+import * as React from "react"
+import '@/styles/App.css'
+import '@/styles/index.css'
+import { Separator } from "@/components/ui/separator"
+
+
+
+
+
+export function NavBar() {
+  const [count, setCount] = useState(0)
+
+  return (
+    <>
+    <div className='px-10 py-7 '>
+      <img src="src\assets\logo2.svg" alt="" className="h-8 w-auto" /> {/* Ajusta tamanho da logo */}
+    </div>
+    <Separator/>
+    </>
+  )
+}
+

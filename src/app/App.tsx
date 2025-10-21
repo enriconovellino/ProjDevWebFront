@@ -1,19 +1,13 @@
 import { useState } from 'react'
-import * as React from "react"
-import './styles/App.css'
-import './styles/index.css'
 import { Button } from "@/components/ui/button"
 import { Separator } from "@/components/ui/separator"
 import {
   Card,
   CardContent,
   CardDescription,
-  CardFooter,
   CardHeader,
   CardTitle,
 } from "@/components/ui/card"
-import { Input } from "@/components/ui/input"
-
 
 
 
@@ -22,13 +16,13 @@ function App() {
 
   return (
     <>
-    <div className='px-10 py-7'>
-      <img src="src\assets\logo2.svg" alt="" className="h-8 w-auto" /> {/* Ajusta tamanho da logo */}
+    <div className='px-10 py-7 '>
+      <img src="/src/assets/images/logo2.svg" alt="Logo" className="h-8 w-auto" />
     </div>
     <Separator/>
 
-    <div className='flex flex-col items-center justify-center h-96'>
-      <h1 className='text-3xl font-bold mt-20'>Bem-Vindo de volta</h1>
+    <div className='flex flex-col items-center justify-center m-7'>
+      <h1 className='text-3xl font-bold'>Bem-Vindo de volta</h1>
       <Card className='w-full max-w-md m-10 p-6'> {/* Responsivo e com padding */}
         <CardHeader>
           <CardTitle className='font-semibold text-2xl text-center'>Entrar</CardTitle>
