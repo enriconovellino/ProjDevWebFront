@@ -24,7 +24,7 @@ const medicos: Med[] = [
   { nome: 'Dra. Beatriz Lima', crm: '89012-SC', especialidade: 'Psiquiatria' },
 ]
 
-function AdmSearchPanel() {
+export function AdmSearchPanel() {
   const [searchTerm, setSearchTerm] = useState('')
   const [selectedEspecialidade, setSelectedEspecialidade] = useState('Todas')
 
