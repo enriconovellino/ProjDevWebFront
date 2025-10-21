@@ -2,8 +2,6 @@
 
 Bem-vindo ao projeto **Clinic Front**! Este guia foi criado para ajudar a equipe a continuar o desenvolvimento com as melhores práticas e padrões já estabelecidos no projeto.
 
----
-
 ## 📋 Índice
 
 1. [Visão Geral do Projeto](#-visão-geral-do-projeto)
@@ -18,8 +16,6 @@ Bem-vindo ao projeto **Clinic Front**! Este guia foi criado para ajudar a equipe
 10. [Integração com API](#-integração-com-api)
 11. [Boas Práticas](#-boas-práticas)
 12. [Scripts Disponíveis](#-scripts-disponíveis)
-
----
 
 ## 🎯 Visão Geral do Projeto
 
