@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { createFileRoute } from '@tanstack/react-router'
 import {
   Card,
   CardContent,
@@ -7,14 +7,13 @@ import {
   CardTitle,
 } from "@/components/ui/card"
 
+export const Route = createFileRoute('/_others/not-found')({
+  component: NotFound,
+})
 
-
- export function NotFound() {
-  
-
+function NotFound() {
   return (
-    <>
-      <div className="flex flex-col items-center justify-center m-7">
+    <div className="flex flex-col items-center justify-center min-h-screen m-7">
         <Card className="w-full max-w-md m-10 p-6">
           <CardHeader>
             <CardTitle className="font-semibold text-2xl text-center">
@@ -31,10 +30,10 @@ import {
             </p>
           </CardContent>
         </Card>
-      </div>
-    </>
-  );
+    </div>
+  )
 }
+
 export default NotFound
 
 

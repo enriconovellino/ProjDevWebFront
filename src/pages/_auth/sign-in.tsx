@@ -1,6 +1,4 @@
-import { useState } from 'react'
-import { Button } from "@/components/ui/button"
-import { Separator } from "@/components/ui/separator"
+import { createFileRoute } from '@tanstack/react-router'
 import {
   Card,
   CardContent,
@@ -9,18 +7,12 @@ import {
   CardTitle,
 } from "@/components/ui/card"
 
+export const Route = createFileRoute('/_auth/sign-in')({
+  component: SignIn,
+})
 
-
- export function Login() {
-  const [count, setCount] = useState(0)
-
+function SignIn() {
   return (
-    <>
-    <div className='px-10 py-7 '>
-      <img src="/src/assets/images/logo2.svg" alt="Logo" className="h-8 w-auto" />
-    </div>
-    <Separator/>
-
     <div className='flex flex-col items-center justify-center m-7'>
       <h1 className='text-3xl font-bold'>Bem-Vindo de volta</h1>
       <Card className='w-full max-w-md m-10 p-6'> {/* Responsivo e com padding */}
@@ -40,7 +32,10 @@ import {
               />
             </div>
             <div className="flex flex-col space-y-2">
-              <label className='font-bold text-sm' htmlFor="password">Senha</label>
+               <div className='flex gap-1'>
+                 <label className='font-bold text-sm' htmlFor="password">Senha</label>
+                 <span className="text-destructive-foreground text-rose-900">*</span>
+               </div>
               <input 
                 className='w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent' 
                 type='password' 
@@ -58,7 +53,6 @@ import {
         </CardContent>
       </Card>
     </div>
-  </>
   )
 }
 

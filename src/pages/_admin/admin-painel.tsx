@@ -1,11 +1,15 @@
 import { useState } from 'react'
-import { Search, Plus, Filter, Circle, CirclePlus } from 'lucide-react'
+import { Search, Filter, CirclePlus } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Card } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
-import { NavBar } from '@/components/common/navbar/NavBar'
+import { createFileRoute } from '@tanstack/react-router'
+
+export const Route = createFileRoute('/_admin/admin-painel')({
+  component: AdminPainelPage,
+})
 
 type Med = {
   nome: string
@@ -24,30 +28,27 @@ const medicos: Med[] = [
   { nome: 'Dra. Beatriz Lima', crm: '89012-SC', especialidade: 'Psiquiatria' },
 ]
 
-export function AdmSearchPanel() {
+function AdminPainelPage() {
   const [searchTerm, setSearchTerm] = useState('')
   const [selectedEspecialidade, setSelectedEspecialidade] = useState('Todas')
 
   const especialidades = ['Todas', ...new Set(medicos.map(m => m.especialidade))]
 
   const medicosFiltrados = medicos.filter(med => {
-    const matchesSearch = 
+    const matchesSearch =
       med.nome.toLowerCase().includes(searchTerm.toLowerCase()) ||
       med.crm.toLowerCase().includes(searchTerm.toLowerCase()) ||
       med.especialidade.toLowerCase().includes(searchTerm.toLowerCase())
-    
-    const matchesEspecialidade = 
-      selectedEspecialidade === 'Todas' || 
+
+    const matchesEspecialidade =
+      selectedEspecialidade === 'Todas' ||
       med.especialidade === selectedEspecialidade
 
     return matchesSearch && matchesEspecialidade
   })
 
   return (
-    <div className="min-h-screen bg-background">
-      <NavBar/>
-      
-      <main className="container mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <main className="container mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Header Section */}
         <div className="mb-8 space-y-6">
           <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
@@ -73,7 +74,7 @@ export function AdmSearchPanel() {
                 <Input
                   placeholder="Buscar por Nome, CRM ou Especialidade..."
                   value={searchTerm}
-                  onChange={(e: any) => setSearchTerm(e.target.value)}
+                  onChange={(e: React.ChangeEvent<HTMLInputElement>) => setSearchTerm(e.target.value)}
                   className="pl-9"
                 />
               </div>
@@ -160,8 +161,5 @@ export function AdmSearchPanel() {
           </div>
         </Card>
       </main>
-    </div>
   )
 }
-
-export default AdmSearchPanel

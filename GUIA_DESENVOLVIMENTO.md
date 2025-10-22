@@ -76,57 +76,77 @@ npm install date-fns
 ```
 clinic-front/
 ├── src/
-│   ├── app/                    # Configuração principal da aplicação
-│   │   ├── App.tsx             # Componente raiz
-│   │   └── main.tsx            # Ponto de entrada da aplicação
+│   ├── main.tsx                    # Ponto de entrada da aplicação
 │   │
-│   ├── components/             # Componentes reutilizáveis
-│   │   ├── ui/                 # Componentes do shadcn/ui
+│   ├── pages/                      # Sistema de rotas (file-based routing)
+│   │   ├── __root.tsx              # Layout raiz (obrigatório)
+│   │   ├── index.tsx               # Página inicial (/) - redireciona para /sign-in
+│   │   ├── routeTree.gen.ts        # Árvore de rotas (gerado automaticamente - NÃO EDITAR)
+│   │   │
+│   │   ├── _auth.tsx               # Layout para rotas de autenticação
+│   │   ├── _auth/
+│   │   │   └── sign-in.tsx         # Rota /sign-in
+│   │   │
+│   │   ├── _admin.tsx              # Layout para rotas administrativas (com NavBar)
+│   │   ├── _admin/
+│   │   │   └── admin-painel.tsx    # Rota /admin-painel
+│   │   │
+│   │   └── _others/
+│   │       └── not-found.tsx       # Página 404
+│   │
+│   ├── components/                 # Componentes reutilizáveis
+│   │   ├── ui/                     # Componentes do shadcn/ui
+│   │   │   ├── avatar.tsx
+│   │   │   ├── badge.tsx
 │   │   │   ├── button.tsx
 │   │   │   ├── card.tsx
+│   │   │   ├── dialog.tsx
 │   │   │   ├── input.tsx
-│   │   │   └── ...
+│   │   │   ├── input-group.tsx
+│   │   │   ├── navigation-menu.tsx
+│   │   │   ├── separator.tsx
+│   │   │   └── table.tsx
 │   │   │
-│   │   └── common/             # Componentes compartilhados do projeto
+│   │   └── common/                 # Componentes compartilhados do projeto
 │   │       ├── navbar/
 │   │       │   └── NavBar.tsx
 │   │       └── searchsection/
 │   │           └── SearchSection.tsx
 │   │
-│   ├── pages/                  # Páginas da aplicação
-│   │   ├── Login.tsx
-│   │   ├── AdmSearchPanel.tsx
-│   │   └── NotFound.tsx
+│   ├── lib/                        # Utilitários e helpers
+│   │   └── utils.ts                # Função cn() para classes CSS
 │   │
-│   ├── routes/                 # Configuração de rotas
-│   │   ├── routeTree.ts        # Árvore de rotas
-│   │   ├── root.tsx            # Rota raiz
-│   │   ├── loginRoute.tsx
-│   │   ├── AdminPainelRouter.tsx
-│   │   └── route404.tsx
-│   │
-│   ├── lib/                    # Utilitários e helpers
-│   │   └── utils.ts            # Função cn() para classes CSS
-│   │
-│   ├── styles/                 # Estilos globais
-│   │   ├── index.css           # CSS global com variáveis Tailwind
+│   ├── styles/                     # Estilos globais
+│   │   ├── index.css               # CSS global com variáveis Tailwind
 │   │   └── App.css
 │   │
-│   ├── assets/                 # Recursos estáticos
+│   ├── assets/                     # Recursos estáticos
 │   │   ├── icons/
 │   │   └── images/
+│   │       └── logo2.svg
 │   │
-│   ├── hooks/                  # Custom React Hooks (criar conforme necessário)
+│   ├── hooks/                      # Custom React Hooks (criar conforme necessário)
 │   │
-│   └── services/               # Serviços de API (criar conforme necessário)
+│   └── services/                   # Serviços de API (criar conforme necessário)
+│       └── api.ts                  # Configuração base do Axios
 │
-├── public/                     # Arquivos públicos estáticos
-├── index.html                  # HTML principal
-├── vite.config.ts              # Configuração do Vite
-├── tsconfig.json               # Configuração TypeScript
-├── components.json             # Configuração shadcn/ui
-└── package.json                # Dependências e scripts
+├── public/                         # Arquivos públicos estáticos
+├── index.html                      # HTML principal
+├── vite.config.ts                  # Configuração do Vite + TanStack Router Plugin
+├── tsconfig.json                   # Configuração TypeScript
+├── eslint.config.js                # Configuração ESLint
+├── tailwind.config.js              # Configuração Tailwind CSS
+├── components.json                 # Configuração shadcn/ui
+└── package.json                    # Dependências e scripts
 ```
+
+**Observações importantes:**
+- 📁 `pages/` contém ROTAS (não componentes de página comuns)
+- 🚫 `routeTree.gen.ts` é gerado automaticamente - **NUNCA EDITE MANUALMENTE**
+- 🎨 Componentes UI ficam em `components/ui/` (shadcn/ui)
+- 🧩 Componentes customizados ficam em `components/common/`
+- 🔧 Utilitários e helpers ficam em `lib/`
+- 🌐 Serviços de API ficam em `services/`
 
 ---
 
@@ -241,98 +261,557 @@ import { PatientCard } from '@/components/common/PatientCard'
 
 ## 🛣️ Como Criar Rotas
 
-O projeto usa **TanStack Router**. Para criar uma nova rota:
+O projeto usa **TanStack Router** com **file-based routing**. As rotas são criadas automaticamente com base na estrutura de arquivos em `src/pages/`.
 
-### Passo 1: Criar o arquivo de rota
+### 📌 Como Funciona o File-Based Routing
 
-**Exemplo: `src/routes/patientsRoute.tsx`**
+- O plugin do TanStack Router no `vite.config.ts` gera automaticamente o arquivo `src/pages/routeTree.gen.ts` baseado nos arquivos em `src/pages/`
+- **NÃO edite** o arquivo `routeTree.gen.ts` - ele é gerado automaticamente pelo plugin quando você inicia o servidor de desenvolvimento
+- O nome do arquivo determina a rota (ex: `login.tsx` → `/login`)
+- Todos os arquivos de rota devem exportar `export const Route` usando `createFileRoute()`
+- O servidor de desenvolvimento regenera automaticamente as rotas quando você adiciona, remove ou modifica arquivos de rota
 
-```tsx
-import { Route } from '@tanstack/react-router'
-import { rootRoute } from './root'
-import PatientsPage from '@/pages/Patients'
+### ⚙️ Configuração do Plugin (vite.config.ts)
 
-export const patientsRoute = new Route({
-  getParentRoute: () => rootRoute,
-  path: '/patients',
-  component: PatientsPage,
+O plugin `@tanstack/router-plugin` está configurado no `vite.config.ts` com as seguintes opções:
+
+```typescript
+import path from "path"
+import { defineConfig } from 'vite'
+import react from '@vitejs/plugin-react'
+import { tanstackRouter } from '@tanstack/router-plugin/vite'
+
+export default defineConfig({
+  plugins: [
+    tanstackRouter({
+      target: 'react',
+      autoCodeSplitting: true,
+      routesDirectory: path.resolve(__dirname, './src/pages'),     // ✅ Diretório das rotas
+      generatedRouteTree: path.resolve(__dirname, './src/pages/routeTree.gen.ts'),  // ✅ Onde gerar o arquivo
+      routeFilePrefix: '',  // ✅ Sem prefixo nos nomes de arquivo
+    }),
+    react(),  // ✅ React plugin vem depois
+    // outros plugins...
+  ],
 })
 ```
 
-### Passo 2: Registrar no Route Tree
+**IMPORTANTE:**
+- A ordem dos plugins é crucial: TanStack Router deve vir **antes** do plugin React
+- As rotas são geradas em `src/pages/` e não em `src/routes/`
 
-Edite `src/routes/routeTree.ts`:
+### 📂 Estrutura Atual de Rotas
 
-```tsx
-import { rootRoute } from './root'
-import { loginRoute } from './loginRoute'
-import { adminPainelRoute } from './AdminPainelRouter'
-import { patientsRoute } from './patientsRoute' // Nova importação
-import { route404 } from './route404'
+O projeto usa uma estrutura organizada com **layouts pathless** e **rotas agrupadas**:
 
-const routeTree = rootRoute.addChildren([
-  loginRoute,
-  adminPainelRoute,
-  patientsRoute, // Adicione aqui
-  route404,
-])
-
-export { routeTree }
+```text
+src/pages/
+├── __root.tsx                    → Layout raiz (obrigatório)
+├── index.tsx                     → / (página inicial - redireciona para /sign-in)
+│
+├── _auth.tsx                     → Layout pathless para autenticação
+│   └── _auth/
+│       └── sign-in.tsx           → /sign-in (página de login)
+│
+├── _admin.tsx                    → Layout pathless para admin (com NavBar)
+│   └── _admin/
+│       └── admin-painel.tsx      → /admin-painel (painel administrativo)
+│
+└── _others/
+    └── not-found.tsx             → Página 404
 ```
 
-### Passo 3: Navegação
+### 🎯 O que são Rotas Pathless (Layouts)?
 
-Use o componente `Link` do TanStack Router:
+**Rotas pathless** são layouts que não adicionam um segmento ao URL, mas envolvem suas rotas filhas com um layout comum.
 
+**Exemplo: `_auth.tsx`**
 ```tsx
-import { Link } from '@tanstack/react-router'
+import { createFileRoute, Outlet } from '@tanstack/react-router'
+import { Separator } from "@/components/ui/separator"
 
-function Navigation() {
+export const Route = createFileRoute('/_auth')({
+  component: AuthLayout,
+})
+
+function AuthLayout() {
   return (
-    <nav>
-      <Link to="/patients" className="...">
-        Pacientes
-      </Link>
-    </nav>
+    <>
+      <div className='px-10 py-7'>
+        <img src="/src/assets/images/logo2.svg" alt="Logo" className="h-8 w-auto" />
+      </div>
+      <Separator/>
+      <Outlet /> {/* Renderiza as rotas filhas aqui */}
+    </>
   )
 }
 ```
 
-### Rotas com Parâmetros
+- O arquivo `_auth.tsx` cria um layout pathless (prefixo `_`)
+- Rotas dentro de `_auth/` herdam esse layout
+- A rota `_auth/sign-in.tsx` resulta no URL `/sign-in` (sem `/auth` no caminho)
+- O layout `_auth.tsx` renderiza o header com logo e o `<Outlet />` renderiza o conteúdo da página filho
 
-**Exemplo: `src/routes/patientDetailRoute.tsx`**
+### 🛠️ Como Criar uma Nova Rota
+
+#### Passo 1: Decidir o Tipo de Rota
+
+**Opção A: Rota Simples**
+- Crie um arquivo diretamente em `src/pages/`
+- Exemplo: `patients.tsx` → `/patients`
+
+**Opção B: Rota com Layout**
+- Adicione dentro de uma pasta de layout existente (`_auth/` ou `_admin/`)
+- Exemplo: `_admin/patients.tsx` → `/patients` (com layout admin)
+
+**Opção C: Criar Novo Grupo com Layout**
+- Crie um layout pathless e sua pasta
+- Exemplo: `_dashboard.tsx` + `_dashboard/overview.tsx`
+
+#### Passo 2: Criar o Arquivo da Rota
+
+**Exemplo 1: Rota Simples - Criar `/patients`**
+
+Crie o arquivo `src/pages/_admin/patients.tsx`:
 
 ```tsx
-import { Route } from '@tanstack/react-router'
-import { rootRoute } from './root'
-import PatientDetailPage from '@/pages/PatientDetail'
+import { createFileRoute } from '@tanstack/react-router'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 
-export const patientDetailRoute = new Route({
-  getParentRoute: () => rootRoute,
-  path: '/patients/$patientId', // $patientId é o parâmetro
-  component: PatientDetailPage,
+export const Route = createFileRoute('/_admin/patients')({
+  component: PatientsPage,
 })
+
+function PatientsPage() {
+  return (
+    <div className="container mx-auto p-6">
+      <Card>
+        <CardHeader>
+          <CardTitle>Gerenciamento de Pacientes</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <p>Lista de pacientes...</p>
+        </CardContent>
+      </Card>
+    </div>
+  )
+}
 ```
 
-**Acessando parâmetros na página:**
+**Exemplo 2: Rota de Autenticação - Criar `/register`**
+
+Crie o arquivo `src/pages/_auth/register.tsx`:
 
 ```tsx
+import { createFileRoute } from '@tanstack/react-router'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
+
+export const Route = createFileRoute('/_auth/register')({
+  component: RegisterPage,
+})
+
+function RegisterPage() {
+  return (
+    <div className='flex flex-col items-center justify-center m-7'>
+      <h1 className='text-3xl font-bold'>Criar Conta</h1>
+      <Card className='w-full max-w-md m-10 p-6'>
+        <CardHeader>
+          <CardTitle className='font-semibold text-2xl text-center'>
+            Cadastro
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <form className="space-y-4">
+            <Input placeholder='Nome completo' />
+            <Input type='email' placeholder='E-mail' />
+            <Input type='password' placeholder='Senha' />
+            <Button type="submit" className="w-full">
+              Cadastrar
+            </Button>
+          </form>
+        </CardContent>
+      </Card>
+    </div>
+  )
+}
+```
+
+**Resultado:** A rota `/register` usará o layout de `_auth.tsx` (com logo e separator)
+
+**Pronto!** O plugin detectará automaticamente o novo arquivo e atualizará `routeTree.gen.ts` quando você iniciar o servidor de desenvolvimento.
+
+#### Passo 3: Navegação entre Rotas
+
+Use o componente `Link` do TanStack Router para navegação:
+
+```tsx
+import { Link } from '@tanstack/react-router'
+import { Button } from '@/components/ui/button'
+
+function Navigation() {
+  return (
+    <nav className="flex gap-4">
+      <Link to="/" className="hover:underline">
+        Início
+      </Link>
+      <Link to="/sign-in" className="hover:underline">
+        Login
+      </Link>
+      <Link to="/patients" className="hover:underline">
+        Pacientes
+      </Link>
+      <Link to="/admin-painel" className="hover:underline">
+        Admin
+      </Link>
+    </nav>
+  )
+}
+
+// Usando Link com Button
+function ButtonLink() {
+  return (
+    <Link to="/sign-in">
+      <Button>Fazer Login</Button>
+    </Link>
+  )
+}
+```
+
+**Navegação Programática:**
+
+```tsx
+import { useNavigate } from '@tanstack/react-router'
+
+function LoginForm() {
+  const navigate = useNavigate()
+
+  const handleLogin = async () => {
+    // ... lógica de login
+    await login()
+
+    // Navegar após login bem-sucedido
+    navigate({ to: '/admin-painel' })
+  }
+
+  return <Button onClick={handleLogin}>Entrar</Button>
+}
+```
+
+### 📦 Como Criar um Novo Layout Pathless
+
+Layouts pathless permitem agrupar rotas com um layout comum sem adicionar segmento ao URL.
+
+**Exemplo: Criar layout para área de dashboard**
+
+**Passo 1:** Crie `src/pages/_dashboard.tsx`:
+
+```tsx
+import { createFileRoute, Outlet } from '@tanstack/react-router'
+import { NavBar } from '@/components/common/navbar/NavBar'
+
+export const Route = createFileRoute('/_dashboard')({
+  component: DashboardLayout,
+})
+
+function DashboardLayout() {
+  return (
+    <div className="min-h-screen">
+      <NavBar />
+      <aside className="w-64 bg-muted p-4">
+        {/* Sidebar aqui */}
+      </aside>
+      <main className="flex-1 p-6">
+        <Outlet /> {/* Rotas filhas renderizam aqui */}
+      </main>
+    </div>
+  )
+}
+```
+
+**Passo 2:** Crie a pasta `src/pages/_dashboard/`
+
+**Passo 3:** Adicione rotas filhas:
+
+`src/pages/_dashboard/overview.tsx`:
+```tsx
+import { createFileRoute } from '@tanstack/react-router'
+
+export const Route = createFileRoute('/_dashboard/overview')({
+  component: OverviewPage,
+})
+
+function OverviewPage() {
+  return <h1>Overview Dashboard</h1>
+}
+```
+
+`src/pages/_dashboard/analytics.tsx`:
+```tsx
+import { createFileRoute } from '@tanstack/react-router'
+
+export const Route = createFileRoute('/_dashboard/analytics')({
+  component: AnalyticsPage,
+})
+
+function AnalyticsPage() {
+  return <h1>Analytics Dashboard</h1>
+}
+```
+
+**Resultado:**
+- `/overview` → Usa layout `_dashboard.tsx` (com NavBar e sidebar)
+- `/analytics` → Usa layout `_dashboard.tsx` (com NavBar e sidebar)
+
+### 🔗 Rotas com Parâmetros Dinâmicos
+
+Use `$` no nome do arquivo para parâmetros dinâmicos.
+
+**Exemplo: Criar rota `/patients/:id`**
+
+Crie o arquivo `src/pages/_admin/patients.$id.tsx`:
+
+```tsx
+import { createFileRoute } from '@tanstack/react-router'
 import { useParams } from '@tanstack/react-router'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+
+export const Route = createFileRoute('/_admin/patients/$id')({
+  component: PatientDetailPage,
+})
 
 function PatientDetailPage() {
-  const { patientId } = useParams({ from: '/patients/$patientId' })
+  const { id } = useParams({ from: '/_admin/patients/$id' })
 
-  return <div>Detalhes do paciente: {patientId}</div>
+  return (
+    <div className="container mx-auto p-6">
+      <Card>
+        <CardHeader>
+          <CardTitle>Detalhes do Paciente #{id}</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <p>Informações do paciente {id}...</p>
+        </CardContent>
+      </Card>
+    </div>
+  )
 }
 ```
 
 **Navegando com parâmetros:**
 
 ```tsx
-<Link to="/patients/$patientId" params={{ patientId: '123' }}>
-  Ver Paciente 123
-</Link>
+import { Link } from '@tanstack/react-router'
+import { Button } from '@/components/ui/button'
+
+function PatientsList() {
+  const patients = [
+    { id: 123, name: 'João Silva' },
+    { id: 456, name: 'Maria Santos' },
+  ]
+
+  return (
+    <div className="space-y-4">
+      {patients.map((patient) => (
+        <Link
+          key={patient.id}
+          to="/patients/$id"
+          params={{ id: String(patient.id) }}
+        >
+          <Button variant="outline" className="w-full">
+            Ver {patient.name}
+          </Button>
+        </Link>
+      ))}
+    </div>
+  )
+}
 ```
+
+### 🔄 Redirecionamento de Rotas
+
+**Exemplo: Redirecionar página inicial para `/sign-in`**
+
+`src/pages/index.tsx`:
+```tsx
+import { createFileRoute, Navigate } from '@tanstack/react-router'
+
+export const Route = createFileRoute('/')({
+  component: () => <Navigate to="/sign-in" />,
+})
+```
+
+**Redirecionamento condicional (após login):**
+
+```tsx
+import { createFileRoute, Navigate } from '@tanstack/react-router'
+
+export const Route = createFileRoute('/login')({
+  component: LoginRedirect,
+})
+
+function LoginRedirect() {
+  const isAuthenticated = !!localStorage.getItem('token')
+
+  if (isAuthenticated) {
+    return <Navigate to="/admin-painel" />
+  }
+
+  return <LoginForm />
+}
+```
+
+### Loader: Carregando Dados Antes de Renderizar
+
+Use `loader` para buscar dados antes de renderizar a página:
+
+```tsx
+import { createFileRoute } from '@tanstack/react-router'
+import { patientsService } from '@/services/patients'
+
+export const Route = createFileRoute('/patients')({
+  loader: async () => {
+    const patients = await patientsService.getAll()
+    return { patients }
+  },
+  component: PatientsPage,
+})
+
+function PatientsPage() {
+  const { patients } = Route.useLoaderData()
+
+  return (
+    <div>
+      {patients.map((patient) => (
+        <div key={patient.id}>{patient.name}</div>
+      ))}
+    </div>
+  )
+}
+```
+
+### 📋 Convenções de Nomenclatura de Arquivos
+
+| Nome do Arquivo | Rota Gerada | Uso | Exemplo no Projeto |
+|-----------------|-------------|-----|-------------------|
+| `__root.tsx` | Layout raiz | Componente raiz (obrigatório) | `src/pages/__root.tsx` |
+| `index.tsx` | `/` | Página inicial | `src/pages/index.tsx` |
+| `_auth.tsx` | Layout pathless | Layout sem adicionar ao path | `src/pages/_auth.tsx` |
+| `_auth/sign-in.tsx` | `/sign-in` | Rota com layout `_auth` | `src/pages/_auth/sign-in.tsx` |
+| `_admin.tsx` | Layout pathless | Layout para rotas admin | `src/pages/_admin.tsx` |
+| `_admin/admin-painel.tsx` | `/admin-painel` | Rota com layout `_admin` | `src/pages/_admin/admin-painel.tsx` |
+| `patients.tsx` | `/patients` | Rota simples | - |
+| `patients.$id.tsx` | `/patients/:id` | Parâmetro dinâmico | - |
+| `doctors.$id.edit.tsx` | `/doctors/:id/edit` | Múltiplos segmentos | - |
+
+**Regras importantes:**
+- Use **hífen** para palavras compostas: `admin-painel.tsx` (não `adminPainel.tsx`)
+- Use **underscore** como prefixo para layouts pathless: `_auth.tsx`
+- Use **$** para parâmetros dinâmicos: `$id`, `$patientId`
+- Use **dois underscores** para arquivos especiais: `__root.tsx`
+
+### 🛡️ Protegendo Rotas (Autenticação)
+
+Use `beforeLoad` para proteger rotas que requerem autenticação:
+
+```tsx
+import { createFileRoute, redirect } from '@tanstack/react-router'
+
+export const Route = createFileRoute('/_admin/admin-painel')({
+  beforeLoad: async () => {
+    const token = localStorage.getItem('token')
+
+    if (!token) {
+      throw redirect({ to: '/sign-in' })
+    }
+  },
+  component: AdminPainelPage,
+})
+
+function AdminPainelPage() {
+  return <div>Painel Administrativo</div>
+}
+```
+
+**Aplicar autenticação a todo um grupo de rotas:**
+
+Coloque o `beforeLoad` no layout pathless:
+
+```tsx
+// src/pages/_admin.tsx
+import { createFileRoute, redirect, Outlet } from '@tanstack/react-router'
+import { NavBar } from '@/components/common/navbar/NavBar'
+
+export const Route = createFileRoute('/_admin')({
+  beforeLoad: async () => {
+    const token = localStorage.getItem('token')
+    if (!token) {
+      throw redirect({ to: '/sign-in' })
+    }
+  },
+  component: AdminLayout,
+})
+
+function AdminLayout() {
+  return (
+    <div className="min-h-screen">
+      <NavBar />
+      <Outlet />
+    </div>
+  )
+}
+```
+
+Agora TODAS as rotas dentro de `_admin/` estarão protegidas automaticamente!
+
+### ✅ Resumo: Checklist para Criar uma Nova Rota
+
+1. **Decidir o tipo de rota:**
+   - [ ] Rota simples? → Criar arquivo direto em `src/pages/`
+   - [ ] Precisa de layout? → Criar dentro de `_auth/` ou `_admin/`
+   - [ ] Novo grupo? → Criar layout pathless novo
+
+2. **Criar o arquivo:**
+   - [ ] Nomear corretamente (hífen para palavras, `$` para parâmetros)
+   - [ ] Importar `createFileRoute` do TanStack Router
+   - [ ] Exportar `export const Route = createFileRoute('...')`
+   - [ ] Definir o componente
+
+3. **Testar:**
+   - [ ] Iniciar servidor de desenvolvimento (`npm run dev`)
+   - [ ] Verificar se `routeTree.gen.ts` foi atualizado
+   - [ ] Acessar a rota no navegador
+   - [ ] Testar navegação com `Link` ou `useNavigate`
+
+**Exemplo completo mínimo:**
+
+```tsx
+import { createFileRoute } from '@tanstack/react-router'
+
+export const Route = createFileRoute('/_admin/minha-rota')({
+  component: MinhaRotaPage,
+})
+
+function MinhaRotaPage() {
+  return <div>Conteúdo da minha rota</div>
+}
+```
+
+### 🚨 Problemas Comuns com Rotas
+
+**1. Erro: "Conflicting configuration paths"**
+- **Causa:** Dois layouts pathless com o mesmo path vazio
+- **Solução:** Mantenha layouts pathless na raiz (`src/pages/_layout.tsx`), não dentro de suas próprias pastas
+
+**2. Rota não aparece no navegador**
+- **Solução:** Verifique se o servidor de desenvolvimento está rodando e se `routeTree.gen.ts` foi atualizado
+
+**3. TypeScript reclama do path da rota**
+- **Solução:** Certifique-se de que o path no `createFileRoute` corresponde exatamente à estrutura de arquivos
+
+**4. Layout não está sendo aplicado**
+- **Solução:** Verifique se o arquivo da rota está dentro da pasta do layout e se o `<Outlet />` está presente no layout
 
 ---
 
