@@ -1,5 +1,4 @@
 import { useState } from 'react'
-import * as React from "react"
 import '@/styles/App.css'
 import '@/styles/index.css'
 import { Separator } from "@/components/ui/separator"
