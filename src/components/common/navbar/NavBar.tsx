@@ -20,11 +20,11 @@ interface NavItem {
 const navItems: NavItem[] = [
   {
     title: "Medicos",
-    href: "/"
+    href: "/admin-painel"
   },
   {
     title: "Pacientes",
-    href: "/sobre"
+    href: "/sign-in"
   },
   {
     title: "Atendimentos",

@@ -5,7 +5,7 @@ import { Input } from '@/components/ui/input'
 import { Card } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
-import { createFileRoute } from '@tanstack/react-router'
+import { createFileRoute, useNavigate } from '@tanstack/react-router'
 
 export const Route = createFileRoute('/_admin/admin-painel')({
   component: AdminPainelPage,
@@ -29,6 +29,7 @@ const medicos: Med[] = [
 ]
 
 function AdminPainelPage() {
+  const navigate = useNavigate()
   const [searchTerm, setSearchTerm] = useState('')
   const [selectedEspecialidade, setSelectedEspecialidade] = useState('Todas')
 
@@ -60,7 +61,11 @@ function AdminPainelPage() {
                 Visualize e gerencie o cadastro de profissionais de saúde
               </p>
             </div>
-            <Button size="lg" className="w-full sm:w-auto">
+            <Button
+              size="lg"
+              className="w-full sm:w-auto"
+              onClick={() => navigate({ to: '/add-doctor' })}
+            >
               <CirclePlus className="mr-2 h-5 w-5" />
               Adicionar Médico
             </Button>

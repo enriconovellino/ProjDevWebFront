@@ -309,13 +309,13 @@ src/pages/
 ├── __root.tsx                    → Layout raiz (obrigatório)
 ├── index.tsx                     → / (página inicial - redireciona para /sign-in)
 │
-├── _auth.tsx                     → Layout pathless para autenticação
-│   └── _auth/
-│       └── sign-in.tsx           → /sign-in (página de login)
+├── _auth/                        → Grupo de rotas de autenticação
+│   ├── route.tsx                 → Layout pathless para autenticação
+│   └── sign-in.tsx               → /sign-in (página de login)
 │
-├── _admin.tsx                    → Layout pathless para admin (com NavBar)
-│   └── _admin/
-│       └── admin-painel.tsx      → /admin-painel (painel administrativo)
+├── _admin/                       → Grupo de rotas administrativas
+│   ├── route.tsx                 → Layout pathless para admin (com NavBar)
+│   └── admin-painel.tsx          → /admin-painel (painel administrativo)
 │
 └── _others/
     └── not-found.tsx             → Página 404
@@ -325,7 +325,21 @@ src/pages/
 
 **Rotas pathless** são layouts que não adicionam um segmento ao URL, mas envolvem suas rotas filhas com um layout comum.
 
-**Exemplo: `_auth.tsx`**
+### 📝 Convenções de Arquivos de Layout
+
+O TanStack Router reconhece os seguintes nomes de arquivo para layouts:
+
+| Nome do Arquivo | Descrição | Lazy Loading |
+|-----------------|-----------|--------------|
+| `route.tsx` | Layout normal | Não |
+| `route.lazy.tsx` | Layout com lazy loading | Sim |
+
+**IMPORTANTE:**
+- ✅ Use `route.tsx` ou `route.lazy.tsx` dentro da pasta do layout
+- ❌ NÃO use nomes personalizados como `layout.tsx`, `_admin.tsx` dentro da pasta
+- ✅ **Recomendação:** Organize tudo dentro da pasta usando `route.tsx`
+
+**Exemplo: Layout de Autenticação - `_auth/route.tsx`**
 ```tsx
 import { createFileRoute, Outlet } from '@tanstack/react-router'
 import { Separator } from "@/components/ui/separator"
@@ -347,10 +361,36 @@ function AuthLayout() {
 }
 ```
 
-- O arquivo `_auth.tsx` cria um layout pathless (prefixo `_`)
-- Rotas dentro de `_auth/` herdam esse layout
+**Exemplo: Layout com Lazy Loading - `_admin/route.lazy.tsx`**
+```tsx
+import { createLazyFileRoute, Outlet } from '@tanstack/react-router'
+import { NavBar } from '@/components/common/navbar/NavBar'
+
+export const Route = createLazyFileRoute('/_admin')({
+  component: AdminLayout,
+})
+
+function AdminLayout() {
+  return (
+    <div className="min-h-screen bg-background">
+      <NavBar />
+      <Outlet />
+    </div>
+  )
+}
+```
+
+**Como funciona:**
+- A pasta `_auth/` agrupa todas as rotas relacionadas à autenticação
+- O arquivo `_auth/route.tsx` é o layout pathless (prefixo `_` na pasta)
+- Rotas dentro de `_auth/` (como `sign-in.tsx`) herdam esse layout
 - A rota `_auth/sign-in.tsx` resulta no URL `/sign-in` (sem `/auth` no caminho)
-- O layout `_auth.tsx` renderiza o header com logo e o `<Outlet />` renderiza o conteúdo da página filho
+- O layout renderiza o header com logo e o `<Outlet />` renderiza o conteúdo da página filha
+
+**Vantagens dessa estrutura:**
+- ✅ Tudo relacionado ao layout fica na mesma pasta
+- ✅ Organização mais clara e intuitiva
+- ✅ Facilita manutenção e navegação no código
 
 ### 🛠️ Como Criar uma Nova Rota
 
@@ -505,7 +545,9 @@ Layouts pathless permitem agrupar rotas com um layout comum sem adicionar segmen
 
 **Exemplo: Criar layout para área de dashboard**
 
-**Passo 1:** Crie `src/pages/_dashboard.tsx`:
+**Passo 1:** Crie a pasta `src/pages/_dashboard/`
+
+**Passo 2:** Crie o arquivo de layout `src/pages/_dashboard/route.tsx`:
 
 ```tsx
 import { createFileRoute, Outlet } from '@tanstack/react-router'
@@ -530,11 +572,10 @@ function DashboardLayout() {
 }
 ```
 
-**Passo 2:** Crie a pasta `src/pages/_dashboard/`
-
-**Passo 3:** Adicione rotas filhas:
+**Passo 3:** Adicione rotas filhas dentro da mesma pasta:
 
 `src/pages/_dashboard/overview.tsx`:
+
 ```tsx
 import { createFileRoute } from '@tanstack/react-router'
 
@@ -548,6 +589,7 @@ function OverviewPage() {
 ```
 
 `src/pages/_dashboard/analytics.tsx`:
+
 ```tsx
 import { createFileRoute } from '@tanstack/react-router'
 
@@ -560,9 +602,73 @@ function AnalyticsPage() {
 }
 ```
 
+**Estrutura final:**
+
+```text
+src/pages/
+└── _dashboard/
+    ├── route.tsx       → Layout do dashboard
+    ├── overview.tsx    → /overview
+    └── analytics.tsx   → /analytics
+```
+
+### ⚠️ Troubleshooting: Erros no routeTree.gen.ts
+
+#### Problema: Erro de sintaxe no arquivo gerado
+
+**Sintomas:**
+
+- Erro `Expected "from" but found "."` no arquivo `routeTree.gen.ts`
+- Imports malformados após criar/mover/deletar arquivos de rota
+- Build falhando com erro de sintaxe
+
+**Causa:**
+
+O arquivo `routeTree.gen.ts` é **gerado automaticamente** pelo plugin TanStack Router. Durante migrações ou mudanças na estrutura de rotas (deletar `_admin.tsx` e criar `_admin/route.tsx`), o gerador pode criar código malformado temporariamente.
+
+**Solução:**
+
+1. **Adicionar routeTree.gen.ts ao .gitignore** (se ainda não estiver):
+
+   ```bash
+   # Adicione esta linha ao .gitignore
+   routeTree.gen.ts
+   ```
+
+2. **Remover o arquivo do Git** (se já estiver sendo rastreado):
+
+   ```bash
+   git rm --cached src/pages/routeTree.gen.ts
+   ```
+
+3. **Deletar e regenerar o arquivo**:
+
+   ```bash
+   # Deletar o arquivo corrompido
+   rm src/pages/routeTree.gen.ts
+
+   # Iniciar o dev server para regenerar
+   npm run dev
+   ```
+
+4. **Verificar a estrutura de arquivos**:
+
+   - ✅ Layouts devem usar `route.tsx` ou `route.lazy.tsx`
+   - ✅ Todos os arquivos de rota devem exportar `export const Route`
+   - ✅ Usar `createFileRoute()` ou `createLazyFileRoute()`
+
+**Prevenção:**
+
+- ✅ **NUNCA** edite manualmente o arquivo `routeTree.gen.ts`
+- ✅ **SEMPRE** adicione `routeTree.gen.ts` ao `.gitignore`
+- ✅ Deixe o arquivo ser gerado localmente em cada máquina
+- ✅ Reinicie o dev server após mudanças estruturais nas rotas
+- ✅ Siga as convenções de nomenclatura: `route.tsx` para layouts
+
 **Resultado:**
-- `/overview` → Usa layout `_dashboard.tsx` (com NavBar e sidebar)
-- `/analytics` → Usa layout `_dashboard.tsx` (com NavBar e sidebar)
+- `/overview` → Usa layout `_dashboard/route.tsx` (com NavBar e sidebar)
+- `/analytics` → Usa layout `_dashboard/route.tsx` (com NavBar e sidebar)
+- Tudo relacionado ao dashboard fica organizado em uma única pasta
 
 ### 🔗 Rotas com Parâmetros Dinâmicos
 
@@ -697,19 +803,38 @@ function PatientsPage() {
 |-----------------|-------------|-----|-------------------|
 | `__root.tsx` | Layout raiz | Componente raiz (obrigatório) | `src/pages/__root.tsx` |
 | `index.tsx` | `/` | Página inicial | `src/pages/index.tsx` |
-| `_auth.tsx` | Layout pathless | Layout sem adicionar ao path | `src/pages/_auth.tsx` |
+| `_auth/route.tsx` | Layout pathless | Layout sem adicionar ao path | `src/pages/_auth/route.tsx` |
+| `_auth/route.lazy.tsx` | Layout pathless (lazy) | Layout com code-splitting | `src/pages/_auth/route.lazy.tsx` |
 | `_auth/sign-in.tsx` | `/sign-in` | Rota com layout `_auth` | `src/pages/_auth/sign-in.tsx` |
-| `_admin.tsx` | Layout pathless | Layout para rotas admin | `src/pages/_admin.tsx` |
+| `_admin/route.tsx` | Layout pathless | Layout para rotas admin | `src/pages/_admin/route.tsx` |
 | `_admin/admin-painel.tsx` | `/admin-painel` | Rota com layout `_admin` | `src/pages/_admin/admin-painel.tsx` |
 | `patients.tsx` | `/patients` | Rota simples | - |
 | `patients.$id.tsx` | `/patients/:id` | Parâmetro dinâmico | - |
 | `doctors.$id.edit.tsx` | `/doctors/:id/edit` | Múltiplos segmentos | - |
 
 **Regras importantes:**
+
 - Use **hífen** para palavras compostas: `admin-painel.tsx` (não `adminPainel.tsx`)
-- Use **underscore** como prefixo para layouts pathless: `_auth.tsx`
+- Use **underscore** como prefixo de pasta para layouts pathless: `_auth/`, `_admin/`
+- Use **route.tsx** ou **route.lazy.tsx** para arquivos de layout dentro da pasta
 - Use **$** para parâmetros dinâmicos: `$id`, `$patientId`
 - Use **dois underscores** para arquivos especiais: `__root.tsx`
+
+**Estrutura recomendada para layouts:**
+
+```text
+src/pages/
+├── __root.tsx              → Layout raiz
+├── index.tsx               → Página inicial
+├── _auth/                  → Grupo de autenticação
+│   ├── route.tsx           → Layout (tudo junto!)
+│   ├── sign-in.tsx         → Rota filha
+│   └── register.tsx        → Rota filha
+└── _admin/                 → Grupo administrativo
+    ├── route.tsx           → Layout (tudo junto!)
+    ├── dashboard.tsx       → Rota filha
+    └── users.tsx           → Rota filha
+```
 
 ### 🛡️ Protegendo Rotas (Autenticação)
 
@@ -736,10 +861,10 @@ function AdminPainelPage() {
 
 **Aplicar autenticação a todo um grupo de rotas:**
 
-Coloque o `beforeLoad` no layout pathless:
+Coloque o `beforeLoad` no arquivo de layout `route.tsx`:
 
 ```tsx
-// src/pages/_admin.tsx
+// src/pages/_admin/route.tsx
 import { createFileRoute, redirect, Outlet } from '@tanstack/react-router'
 import { NavBar } from '@/components/common/navbar/NavBar'
 
