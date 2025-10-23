@@ -1,7 +1,7 @@
-import { createFileRoute, Outlet } from '@tanstack/react-router'
+import { Outlet, createLazyFileRoute } from '@tanstack/react-router'
 import { NavBar } from '@/components/common/navbar/NavBar'
 
-export const Route = createFileRoute('/_admin')({
+export const Route = createLazyFileRoute('/_admin')({
   component: AdminLayout,
 })
 
