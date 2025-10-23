@@ -1,5 +1,8 @@
 ## 🎯 Visão Geral do Projeto
 
+<img width="1855" height="931" alt="Captura de tela 2025-10-21 174331" src="https://github.com/user-attachments/assets/de319241-fe80-43b7-b255-6401ddfd4b12" />
+
+
 Este é um sistema de gerenciamento de clínica médica construído com tecnologias modernas:
 
 - **React 19** - Framework JavaScript para UI
