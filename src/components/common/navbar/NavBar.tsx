@@ -11,6 +11,15 @@ import {
 } from "@/components/ui/navigation-menu"
 import { cn } from "@/lib/utils"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+import {
+  DropdownMenu,
+  DropdownMenuTrigger,
+  DropdownMenuContent,
+  DropdownMenuItem,
+} from "@/components/ui/dropdown-menu"
+import { DropdownMenuGroup } from '@radix-ui/react-dropdown-menu'
+import { ArrowLeftFromLine, ArrowRightFromLine, CircleUserRound, Settings } from 'lucide-react'
+
 
 interface NavItem {
   title: string
@@ -71,12 +80,34 @@ export function NavBar() {
               ))}
             </NavigationMenuList>
           </NavigationMenu>
-
-         <Avatar>
-          <AvatarImage src="https://github.com/shadcn.png" alt="@shadcn" />
-          <AvatarFallback>CN</AvatarFallback>
-        </Avatar>
-          
+        <DropdownMenu >
+            <DropdownMenuTrigger>
+              <Avatar>
+                <AvatarImage src="https://github.com/shadcn.png" alt="@shadcn" />
+                <AvatarFallback>CN</AvatarFallback>
+              </Avatar>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent className="w-56 m-4 bg-[var(--background)] rounded-lg p-2">
+              <DropdownMenuGroup className='flex  items-center hover:bg-[var(--primary)]/8 rounded-md ' >
+                <DropdownMenuItem>
+                <CircleUserRound width={20} />
+                  Perfil
+                </DropdownMenuItem>
+              </DropdownMenuGroup>
+               <DropdownMenuGroup className='flex  items-center hover:bg-[var(--primary)]/8 rounded-md '>
+                <DropdownMenuItem>
+                  <Settings width={20} />
+                  Configurações
+                </DropdownMenuItem>
+              </DropdownMenuGroup>
+               <DropdownMenuGroup>
+                <DropdownMenuItem className='text-red-600 hover:bg-red-500/10 hover:text-red-700'>
+                <ArrowLeftFromLine width={20} />
+                  Log out
+                </DropdownMenuItem>
+              </DropdownMenuGroup>
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
       </nav>
       <Separator className='mb-20' />

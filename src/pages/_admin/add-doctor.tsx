@@ -18,20 +18,7 @@ type DoctorFormData = {
   schedule: string
 }
 
-const specialtyOptions = [
-  'Cardiologia',
-  'Pediatria',
-  'Ortopedia',
-  'Dermatologia',
-  'Neurologia',
-  'Ginecologia',
-  'Oftalmologia',
-  'Psiquiatria',
-  'Clínica Geral',
-  'Endocrinologia',
-  'Gastroenterologia',
-  'Urologia',
-]
+
 
 const scheduleOptions = [
   'Manhã (08:00 - 12:00)',
@@ -102,174 +89,173 @@ function AddDoctorPage() {
       </div>
 
       {/* Form Section */}
-      <Card className="max-w-3xl">
-        <form onSubmit={handleSubmit}>
-          <CardHeader>
-            <CardTitle>Informações do Médico</CardTitle>
-            <CardDescription>
-              Todos os campos são obrigatórios para o cadastro
-            </CardDescription>
-          </CardHeader>
+      <div className="flex justify-center w-full">
+        <Card className="max-w-full w-full md:w-3/4 lg:w-1/2">
+          <form onSubmit={handleSubmit}>
+            <CardHeader>
+              <CardTitle>Informações do Médico</CardTitle>
+              <CardDescription>
+                Todos os campos são obrigatórios para o cadastro
+              </CardDescription>
+            </CardHeader>
 
-          <CardContent className="space-y-6">
-            {/* Full Name Field */}
-            <div className="space-y-2">
-              <label
-                htmlFor="fullName"
-                className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
-              >
-                Nome Completo
-              </label>
-              <Input
-                id="fullName"
-                name="fullName"
-                type="text"
-                placeholder="Dr. João Silva"
-                value={formData.fullName}
-                onChange={handleInputChange}
-                required
-                className="w-full"
-              />
-            </div>
-
-            {/* CRM Field */}
-            <div className="space-y-2">
-              <label
-                htmlFor="crm"
-                className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
-              >
-                CRM
-              </label>
-              <Input
-                id="crm"
-                name="crm"
-                type="text"
-                placeholder="12345-SP"
-                value={formData.crm}
-                onChange={handleInputChange}
-                required
-                className="w-full"
-              />
-              <p className="text-xs text-muted-foreground">
-                Formato: 12345-UF (número seguido de hífen e estado)
-              </p>
-            </div>
-
-            {/* Specialty Field */}
-            <div className="space-y-2">
-              <label
-                htmlFor="specialty"
-                className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
-              >
-                Especialidade
-              </label>
-              <select
-                id="specialty"
-                name="specialty"
-                value={formData.specialty}
-                onChange={handleInputChange}
-                required
-                className="flex h-10 w-full items-center justify-between rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-              >
-                <option value="">Selecione uma especialidade</option>
-                {specialtyOptions.map(specialty => (
-                  <option key={specialty} value={specialty}>
-                    {specialty}
-                  </option>
-                ))}
-              </select>
-            </div>
-
-            {/* Email Field */}
-            <div className="space-y-2">
-              <label
-                htmlFor="email"
-                className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
-              >
-                Email
-              </label>
-              <Input
-                id="email"
-                name="email"
-                type="email"
-                placeholder="joao.silva@exemplo.com"
-                value={formData.email}
-                onChange={handleInputChange}
-                required
-                className="w-full"
-              />
-            </div>
-
-            {/* Phone Field */}
-            <div className="space-y-2">
-              <label
-                htmlFor="phone"
-                className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
-              >
-                Telefone
-              </label>
-              <Input
-                id="phone"
-                name="phone"
-                type="tel"
-                placeholder="(11) 98765-4321"
-                value={formData.phone}
-                onChange={handleInputChange}
-                required
-                className="w-full"
-              />
-            </div>
-
-            {/* Availability Section */}
-            <div className="pt-4 border-t">
-              <h3 className="text-lg font-semibold mb-4">Disponibilidade</h3>
-
-              {/* Schedule Field */}
+            <CardContent className="space-y-6">
+              {/* Full Name Field */}
               <div className="space-y-2">
                 <label
-                  htmlFor="schedule"
+                  htmlFor="fullName"
                   className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
                 >
-                  Horário de Atendimento
+                  Nome Completo
                 </label>
-                <select
-                  id="schedule"
-                  name="schedule"
-                  value={formData.schedule}
+                <Input
+                  id="fullName"
+                  name="fullName"
+                  type="text"
+                  placeholder="Dr. João Silva"
+                  value={formData.fullName}
                   onChange={handleInputChange}
                   required
-                  className="flex h-10 w-full items-center justify-between rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-                >
-                  <option value="">Selecione um horário</option>
-                  {scheduleOptions.map(schedule => (
-                    <option key={schedule} value={schedule}>
-                      {schedule}
-                    </option>
-                  ))}
-                </select>
+                  className="w-full"
+                />
               </div>
-            </div>
-          </CardContent>
 
-          <CardFooter className="flex flex-col-reverse sm:flex-row gap-3 sm:justify-end">
-            <Button
-              type="button"
-              variant="outline"
-              onClick={handleCancel}
-              className="w-full sm:w-auto"
-            >
-              Cancelar
-            </Button>
-            <Button
-              type="submit"
-              className="w-full sm:w-auto"
-            >
-              <UserPlus className="mr-2 h-4 w-4" />
-              Adicionar Médico
-            </Button>
-          </CardFooter>
-        </form>
-      </Card>
+              {/* CRM Field */}
+              <div className="space-y-2">
+                <label
+                  htmlFor="crm"
+                  className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                >
+                  CRM
+                </label>
+                <Input
+                  id="crm"
+                  name="crm"
+                  type="text"
+                  placeholder="12345-SP"
+                  value={formData.crm}
+                  onChange={handleInputChange}
+                  required
+                  className="w-full"
+                />
+                <p className="text-xs text-muted-foreground">
+                  Formato: 12345-UF (número seguido de hífen e estado)
+                </p>
+              </div>
+
+              {/* Specialty Field */}
+              <div className="space-y-2">
+                <label
+                  htmlFor="specialty"
+                  className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                >
+                  Especialidade
+
+                  <Input
+                  id="specialty"
+                  name="specialty"
+                  type="text"
+                  placeholder="Cardiologia"
+                  value={formData.specialty}
+                  onChange={handleInputChange}
+                  required
+                  className="w-full"
+                />
+                </label>
+                
+              </div>
+
+              {/* Email Field */}
+              <div className="space-y-2">
+                <label
+                  htmlFor="email"
+                  className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                >
+                  Email
+                </label>
+                <Input
+                  id="email"
+                  name="email"
+                  type="email"
+                  placeholder="joao.silva@exemplo.com"
+                  value={formData.email}
+                  onChange={handleInputChange}
+                  required
+                  className="w-full"
+                />
+              </div>
+
+              {/* Phone Field */}
+              <div className="space-y-2">
+                <label
+                  htmlFor="phone"
+                  className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                >
+                  Telefone
+                </label>
+                <Input
+                  id="phone"
+                  name="phone"
+                  type="tel"
+                  placeholder="(11) 98765-4321"
+                  value={formData.phone}
+                  onChange={handleInputChange}
+                  required
+                  className="w-full"
+                />
+              </div>
+
+              {/* Availability Section */}
+              <div className="pt-4 border-t">
+                <h3 className="text-lg font-semibold mb-4">Disponibilidade</h3>
+
+                {/* Schedule Field */}
+                <div className="space-y-2">
+                  <label
+                    htmlFor="schedule"
+                    className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                  >
+                    Horário de Atendimento
+                  </label>
+                  <select
+                    id="schedule"
+                    name="schedule"
+                    value={formData.schedule}
+                    onChange={handleInputChange}
+                    required
+                    className="flex h-10 w-full items-center justify-between rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                  >
+                    <option value="">Selecione um horário</option>
+                    {scheduleOptions.map(schedule => (
+                      <option key={schedule} value={schedule}>
+                        {schedule}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+            </CardContent>
+
+            <CardFooter className="flex flex-col-reverse sm:flex-row gap-3 sm:justify-end">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={handleCancel}
+                className="w-full sm:w-auto"
+              >
+                Cancelar
+              </Button>
+              <Button
+                type="submit"
+                className="w-full sm:w-auto"
+              >
+                <UserPlus className="mr-2 h-4 w-4" />
+                Adicionar Médico
+              </Button>
+            </CardFooter>
+          </form>
+        </Card>
+      </div>
     </main>
   )
 }

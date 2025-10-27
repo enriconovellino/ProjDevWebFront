@@ -15,17 +15,18 @@ type Med = {
   nome: string
   crm: string
   especialidade: string
+  escala: string
 }
 
 const medicos: Med[] = [
-  { nome: 'Dr. Carlos Silva', crm: '12345-SP', especialidade: 'Cardiologia' },
-  { nome: 'Dra. Ana Paula Santos', crm: '23456-RJ', especialidade: 'Pediatria' },
-  { nome: 'Dr. Roberto Oliveira', crm: '34567-MG', especialidade: 'Ortopedia' },
-  { nome: 'Dra. Mariana Costa', crm: '45678-SP', especialidade: 'Dermatologia' },
-  { nome: 'Dr. Fernando Alves', crm: '56789-RS', especialidade: 'Neurologia' },
-  { nome: 'Dra. Juliana Mendes', crm: '67890-BA', especialidade: 'Ginecologia' },
-  { nome: 'Dr. Paulo Ricardo', crm: '78901-PR', especialidade: 'Oftalmologia' },
-  { nome: 'Dra. Beatriz Lima', crm: '89012-SC', especialidade: 'Psiquiatria' },
+  { nome: 'Dr. Carlos Silva', crm: '12345-SP', especialidade: 'Cardiologia', escala: 'Manhã (08:00 - 12:00)' },
+  { nome: 'Dra. Ana Paula Santos', crm: '23456-RJ', especialidade: 'Pediatria', escala: 'Tarde (13:00 - 17:00)' },
+  { nome: 'Dr. Roberto Oliveira', crm: '34567-MG', especialidade: 'Ortopedia', escala: 'Noite (18:00 - 22:00)' },
+  { nome: 'Dra. Mariana Costa', crm: '45678-SP', especialidade: 'Dermatologia', escala: 'Integral (08:00 - 17:00)' },
+  { nome: 'Dr. Fernando Alves', crm: '56789-RS', especialidade: 'Neurologia', escala: 'Plantão 24h' },
+  { nome: 'Dra. Juliana Mendes', crm: '67890-BA', especialidade: 'Ginecologia', escala: 'Manhã (08:00 - 12:00)' },
+  { nome: 'Dr. Paulo Ricardo', crm: '78901-PR', especialidade: 'Oftalmologia', escala: 'Tarde (13:00 - 17:00)' },
+  { nome: 'Dra. Beatriz Lima', crm: '89012-SC', especialidade: 'Psiquiatria', escala: 'Noite (18:00 - 22:00)' },
 ]
 
 function AdminPainelPage() {
@@ -39,7 +40,8 @@ function AdminPainelPage() {
     const matchesSearch =
       med.nome.toLowerCase().includes(searchTerm.toLowerCase()) ||
       med.crm.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      med.especialidade.toLowerCase().includes(searchTerm.toLowerCase())
+      med.especialidade.toLowerCase().includes(searchTerm.toLowerCase())||
+      med.escala.toLowerCase().includes(searchTerm.toLowerCase())
 
     const matchesEspecialidade =
       selectedEspecialidade === 'Todas' ||
@@ -62,6 +64,7 @@ function AdminPainelPage() {
               </p>
             </div>
             <Button
+              
               size="lg"
               className="w-full sm:w-auto"
               onClick={() => navigate({ to: '/add-doctor' })}
@@ -77,7 +80,7 @@ function AdminPainelPage() {
               <div className="relative flex-1">
                 <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                 <Input
-                  placeholder="Buscar por Nome, CRM ou Especialidade..."
+                  placeholder="Buscar por Nome, CRM ou Escala..."
                   value={searchTerm}
                   onChange={(e: React.ChangeEvent<HTMLInputElement>) => setSearchTerm(e.target.value)}
                   className="pl-9"
@@ -117,7 +120,8 @@ function AdminPainelPage() {
                   <th className="h-12 px-4 text-left align-middle font-medium text-muted-foreground">Nome</th>
                   <th className="h-12 px-4 text-left align-middle font-medium text-muted-foreground">CRM</th>
                   <th className="h-12 px-4 text-left align-middle font-medium text-muted-foreground">Especialidade</th>
-                  <th className="h-12 px-4 text-right align-middle font-medium text-muted-foreground">Ações</th>
+                  <th className="h-12 px-4 text-left align-middle font-medium text-muted-foreground">Escala</th>
+                  <th className="h-12 px-4 text-center align-middle font-medium text-muted-foreground">Ações</th>
                 </tr>
               </thead>
               <tbody className="[&_tr:last-child]:border-0">
@@ -148,12 +152,18 @@ function AdminPainelPage() {
                       <td className="p-4 align-middle">
                         <Badge variant="secondary">{med.especialidade}</Badge>
                       </td>
+                      <td className="p-4 align-middle">
+                        <Badge variant="secondary">{med.especialidade}</Badge>
+                      </td>
+                      <td className="p-4 align-middle">
+                        <Badge variant="secondary">{med.escala}</Badge>
+                      </td>
                       <td className="p-4 align-middle text-right">
                         <div className="flex justify-end gap-2">
-                          <Button variant="ghost" size="sm">
+                          <Button variant="outline" size="sm" className="text-destructive hover:text-emerald-700 hover:border-emerald-700" >
                             Editar
                           </Button>
-                          <Button variant="ghost" size="sm" className="text-destructive hover:text-destructive hover:bg-destructive/10">
+                          <Button variant="outline" size="sm" className="text-destructive hover:text-[var(--destructive)] hover:border-[var(--destructive)]">
                             Remover
                           </Button>
                         </div>

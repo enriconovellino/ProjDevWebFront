@@ -29,6 +29,7 @@ function SignIn() {
                 type='email' 
                 id="email"
                 placeholder='exemplo@email.com' 
+                required
               />
             </div>
             <div className="flex flex-col space-y-2">
@@ -41,6 +42,7 @@ function SignIn() {
                 type='password' 
                 id="password"
                 placeholder='Sua senha' 
+                required
               />
             </div>
             <button 
