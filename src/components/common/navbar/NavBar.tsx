@@ -18,13 +18,15 @@ import {
   DropdownMenuItem,
 } from "@/components/ui/dropdown-menu"
 import { DropdownMenuGroup } from '@radix-ui/react-dropdown-menu'
-import { ArrowLeftFromLine, ArrowRightFromLine, CircleUserRound, Settings } from 'lucide-react'
+import { ArrowLeftFromLine, CircleUserRound, Settings } from 'lucide-react'
+import { useNavigate } from '@tanstack/react-router'
 
 
 interface NavItem {
   title: string
   href: string
 }
+
 
 const navItems: NavItem[] = [
   {
@@ -33,17 +35,18 @@ const navItems: NavItem[] = [
   },
   {
     title: "Pacientes",
-    href: "/sign-in"
+    href: "/not-found"
   },
   {
     title: "Atendimentos",
-    href: "/servicos"
+    href: "/not-found"
   },
-  
+
 ]
 
 export function NavBar() {
   const [activeLink, setActiveLink] = useState("/")
+  const navigate = useNavigate()
 
   return (
     <>
@@ -80,28 +83,31 @@ export function NavBar() {
               ))}
             </NavigationMenuList>
           </NavigationMenu>
-        <DropdownMenu >
-            <DropdownMenuTrigger>
+        <DropdownMenu>
+            <DropdownMenuTrigger className="cursor-pointer">
               <Avatar>
                 <AvatarImage src="https://github.com/shadcn.png" alt="@shadcn" />
                 <AvatarFallback>CN</AvatarFallback>
               </Avatar>
             </DropdownMenuTrigger>
-            <DropdownMenuContent className="w-56 m-4 bg-[var(--background)] rounded-lg p-2">
-              <DropdownMenuGroup className='flex  items-center hover:bg-[var(--primary)]/8 rounded-md ' >
-                <DropdownMenuItem>
+            <DropdownMenuContent className="w-56 m-4 bg-[var(--background)] rounded-lg p-2  ">
+              <DropdownMenuGroup className='flex  items-center hover:bg-[var(--primary)]/8 rounded-md  ' >
+                <DropdownMenuItem className='cursor-pointer' onClick={() => navigate({ to: '/profile' })}>
                 <CircleUserRound width={20} />
                   Perfil
                 </DropdownMenuItem>
               </DropdownMenuGroup>
                <DropdownMenuGroup className='flex  items-center hover:bg-[var(--primary)]/8 rounded-md '>
-                <DropdownMenuItem>
+                <DropdownMenuItem className='cursor-pointer' onClick={() => navigate({ to: '/settings-adm' })}>
                   <Settings width={20} />
                   Configurações
                 </DropdownMenuItem>
               </DropdownMenuGroup>
                <DropdownMenuGroup>
-                <DropdownMenuItem className='text-red-600 hover:bg-red-500/10 hover:text-red-700'>
+                <DropdownMenuItem
+                  className= 'cursor-pointer text-red-600 hover:bg-red-500/10 hover:text-red-700'
+                  onClick={() => navigate({ to: '/not-found' })}
+                >
                 <ArrowLeftFromLine width={20} />
                   Log out
                 </DropdownMenuItem>

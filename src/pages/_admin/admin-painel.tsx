@@ -1,10 +1,18 @@
 import { useState } from 'react'
-import { Search, Filter, CirclePlus } from 'lucide-react'
+import { Search, Filter, CirclePlus, AlertTriangle } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Card } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog'
 import { createFileRoute, useNavigate } from '@tanstack/react-router'
 
 export const Route = createFileRoute('/_admin/admin-painel')({
@@ -33,6 +41,8 @@ function AdminPainelPage() {
   const navigate = useNavigate()
   const [searchTerm, setSearchTerm] = useState('')
   const [selectedEspecialidade, setSelectedEspecialidade] = useState('Todas')
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false)
+  const [medicoToDelete, setMedicoToDelete] = useState<Med | null>(null)
 
   const especialidades = ['Todas', ...new Set(medicos.map(m => m.especialidade))]
 
@@ -49,6 +59,26 @@ function AdminPainelPage() {
 
     return matchesSearch && matchesEspecialidade
   })
+
+  const handleDeleteClick = (medico: Med) => {
+    setMedicoToDelete(medico)
+    setIsDeleteDialogOpen(true)
+  }
+
+  const handleDeleteConfirm = () => {
+    if (medicoToDelete) {
+      // Aqui você adicionaria a lógica para remover o médico
+      console.log('Removendo médico:', medicoToDelete)
+      // Simulando remoção - em produção, fazer chamada à API
+      setIsDeleteDialogOpen(false)
+      setMedicoToDelete(null)
+    }
+  }
+
+  const handleDeleteCancel = () => {
+    setIsDeleteDialogOpen(false)
+    setMedicoToDelete(null)
+  }
 
   return (
     <main className="container mx-auto px-4 sm:px-6 lg:px-8 py-8">
@@ -127,7 +157,7 @@ function AdminPainelPage() {
               <tbody className="[&_tr:last-child]:border-0">
                 {medicosFiltrados.length === 0 ? (
                   <tr className="border-b">
-                    <td colSpan={4} className="h-32 text-center">
+                    <td colSpan={5} className="h-32 text-center">
                       <div className="flex flex-col items-center justify-center text-muted-foreground">
                         <Search className="mb-3 h-12 w-12 opacity-40" />
                         <p className="text-lg font-medium">Nenhum médico encontrado</p>
@@ -153,17 +183,24 @@ function AdminPainelPage() {
                         <Badge variant="secondary">{med.especialidade}</Badge>
                       </td>
                       <td className="p-4 align-middle">
-                        <Badge variant="secondary">{med.especialidade}</Badge>
-                      </td>
-                      <td className="p-4 align-middle">
-                        <Badge variant="secondary">{med.escala}</Badge>
+                        <Badge variant="outline">{med.escala}</Badge>
                       </td>
                       <td className="p-4 align-middle text-right">
                         <div className="flex justify-end gap-2">
-                          <Button variant="outline" size="sm" className="text-destructive hover:text-emerald-700 hover:border-emerald-700" >
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            className="text-destructive hover:text-emerald-700 hover:border-emerald-700"
+                            onClick={() => navigate({ to: '/edit-doctor', search: { crm: med.crm } })}
+                          >
                             Editar
                           </Button>
-                          <Button variant="outline" size="sm" className="text-destructive hover:text-[var(--destructive)] hover:border-[var(--destructive)]">
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            className="text-destructive hover:text-[var(--destructive)] hover:border-[var(--destructive)]"
+                            onClick={() => handleDeleteClick(med)}
+                          >
                             Remover
                           </Button>
                         </div>
@@ -175,6 +212,44 @@ function AdminPainelPage() {
             </table>
           </div>
         </Card>
+
+        {/* Dialog de Confirmação de Remoção */}
+        <Dialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
+          <DialogContent className="sm:max-w-[425px] !bg-white dark:!secondary border-2 border-border">
+            <DialogHeader>
+              <DialogTitle className="flex items-center gap-2 text-destructive">
+                <AlertTriangle className="h-5 w-5" />
+                Confirmar Remoção
+              </DialogTitle>
+              <DialogDescription className="pt-4">
+                Tem certeza que deseja remover o médico{' '}
+                <span className="font-semibold text-foreground">
+                  {medicoToDelete?.nome}
+                </span>{' '}
+                (CRM: {medicoToDelete?.crm})?
+                <br />
+                <br />
+                Esta ação não pode ser desfeita.
+              </DialogDescription>
+            </DialogHeader>
+            <DialogFooter className="gap-2 sm:gap-0">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={handleDeleteCancel}
+              >
+                Cancelar
+              </Button>
+              <Button
+                type="button"
+                variant="destructive"
+                onClick={handleDeleteConfirm}
+              >
+                Remover
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
       </main>
   )
 }
