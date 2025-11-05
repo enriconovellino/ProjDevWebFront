@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Search, Filter, CirclePlus, AlertTriangle } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -14,64 +14,96 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog'
 import { createFileRoute, useNavigate } from '@tanstack/react-router'
+import { medicoService } from '@/services/medico.service'
+import { especialidadeService } from '@/services/especialidade.service'
+import { handleApiError } from '@/services/api'
+import type { Medico } from '@/types/medico.types'
 
 export const Route = createFileRoute('/_admin/admin-painel')({
   component: AdminPainelPage,
 })
-
-type Med = {
-  nome: string
-  crm: string
-  especialidade: string
-  escala: string
-}
-
-const medicos: Med[] = [
-  { nome: 'Dr. Carlos Silva', crm: '12345-SP', especialidade: 'Cardiologia', escala: 'Manhã (08:00 - 12:00)' },
-  { nome: 'Dra. Ana Paula Santos', crm: '23456-RJ', especialidade: 'Pediatria', escala: 'Tarde (13:00 - 17:00)' },
-  { nome: 'Dr. Roberto Oliveira', crm: '34567-MG', especialidade: 'Ortopedia', escala: 'Noite (18:00 - 22:00)' },
-  { nome: 'Dra. Mariana Costa', crm: '45678-SP', especialidade: 'Dermatologia', escala: 'Integral (08:00 - 17:00)' },
-  { nome: 'Dr. Fernando Alves', crm: '56789-RS', especialidade: 'Neurologia', escala: 'Plantão 24h' },
-  { nome: 'Dra. Juliana Mendes', crm: '67890-BA', especialidade: 'Ginecologia', escala: 'Manhã (08:00 - 12:00)' },
-  { nome: 'Dr. Paulo Ricardo', crm: '78901-PR', especialidade: 'Oftalmologia', escala: 'Tarde (13:00 - 17:00)' },
-  { nome: 'Dra. Beatriz Lima', crm: '89012-SC', especialidade: 'Psiquiatria', escala: 'Noite (18:00 - 22:00)' },
-]
 
 function AdminPainelPage() {
   const navigate = useNavigate()
   const [searchTerm, setSearchTerm] = useState('')
   const [selectedEspecialidade, setSelectedEspecialidade] = useState('Todas')
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false)
-  const [medicoToDelete, setMedicoToDelete] = useState<Med | null>(null)
+  const [medicoToDelete, setMedicoToDelete] = useState<Medico | null>(null)
 
-  const especialidades = ['Todas', ...new Set(medicos.map(m => m.especialidade))]
+  // Estados para dados da API
+  const [medicos, setMedicos] = useState<Medico[]>([])
+  const [especialidades, setEspecialidades] = useState<string[]>(['Todas'])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState('')
+  const [deleting, setDeleting] = useState(false)
+
+  // Carrega médicos e especialidades ao montar o componente
+  useEffect(() => {
+    loadData()
+  }, [])
+
+  const loadData = async () => {
+    setLoading(true)
+    setError('')
+
+    try {
+      // Carrega médicos
+      const medicosResponse = await medicoService.list(1, 100)
+      setMedicos(medicosResponse.data)
+
+      // Carrega especialidades
+      const especialidadesResponse = await especialidadeService.list(1, 100, true)
+      const especialidadesNomes = especialidadesResponse.map(e => e.nome)
+      setEspecialidades(['Todas', ...especialidadesNomes])
+    } catch (err) {
+      setError(handleApiError(err))
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  // Função auxiliar para obter nome da especialidade
+  const getEspecialidadeNome = (medico: Medico): string => {
+    if (medico.especialidades && medico.especialidades.length > 0) {
+      return medico.especialidades[0].especialidade.nome
+    }
+    return 'Sem especialidade'
+  }
 
   const medicosFiltrados = medicos.filter(med => {
+    const especialidadeNome = getEspecialidadeNome(med)
+
     const matchesSearch =
       med.nome.toLowerCase().includes(searchTerm.toLowerCase()) ||
       med.crm.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      med.especialidade.toLowerCase().includes(searchTerm.toLowerCase())||
-      med.escala.toLowerCase().includes(searchTerm.toLowerCase())
+      especialidadeNome.toLowerCase().includes(searchTerm.toLowerCase())
 
     const matchesEspecialidade =
       selectedEspecialidade === 'Todas' ||
-      med.especialidade === selectedEspecialidade
+      especialidadeNome === selectedEspecialidade
 
     return matchesSearch && matchesEspecialidade
   })
 
-  const handleDeleteClick = (medico: Med) => {
+  const handleDeleteClick = (medico: Medico) => {
     setMedicoToDelete(medico)
     setIsDeleteDialogOpen(true)
   }
 
-  const handleDeleteConfirm = () => {
-    if (medicoToDelete) {
-      // Aqui você adicionaria a lógica para remover o médico
-      console.log('Removendo médico:', medicoToDelete)
-      // Simulando remoção - em produção, fazer chamada à API
+  const handleDeleteConfirm = async () => {
+    if (!medicoToDelete) return
+
+    setDeleting(true)
+    try {
+      await medicoService.delete(medicoToDelete.id)
+      // Remove o médico da lista localmente
+      setMedicos(medicos.filter(m => m.id !== medicoToDelete.id))
       setIsDeleteDialogOpen(false)
       setMedicoToDelete(null)
+    } catch (err) {
+      setError(handleApiError(err))
+    } finally {
+      setDeleting(false)
     }
   }
 
@@ -94,7 +126,6 @@ function AdminPainelPage() {
               </p>
             </div>
             <Button
-              
               size="lg"
               className="w-full sm:w-auto"
               onClick={() => navigate({ to: '/add-doctor' })}
@@ -104,25 +135,34 @@ function AdminPainelPage() {
             </Button>
           </div>
 
+          {/* Error Alert */}
+          {error && (
+            <div className="bg-red-50 text-red-600 p-4 rounded-md">
+              {error}
+            </div>
+          )}
+
           {/* Search and Filter Section */}
           <Card className="p-4">
             <div className="flex flex-col gap-4 md:flex-row">
               <div className="relative flex-1">
                 <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                 <Input
-                  placeholder="Buscar por Nome, CRM ou Escala..."
+                  placeholder="Buscar por Nome, CRM ou Especialidade..."
                   value={searchTerm}
                   onChange={(e: React.ChangeEvent<HTMLInputElement>) => setSearchTerm(e.target.value)}
                   className="pl-9"
+                  disabled={loading}
                 />
               </div>
-              
+
               <div className="flex items-center gap-2 md:min-w-[240px]">
                 <Filter className="h-4 w-4 text-muted-foreground" />
                 <select
                   value={selectedEspecialidade}
                   onChange={(e) => setSelectedEspecialidade(e.target.value)}
                   className="flex h-10 w-full items-center justify-between rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                  disabled={loading}
                 >
                   {especialidades.map(esp => (
                     <option key={esp} value={esp}>{esp}</option>
@@ -150,12 +190,20 @@ function AdminPainelPage() {
                   <th className="h-12 px-4 text-left align-middle font-medium text-muted-foreground">Nome</th>
                   <th className="h-12 px-4 text-left align-middle font-medium text-muted-foreground">CRM</th>
                   <th className="h-12 px-4 text-left align-middle font-medium text-muted-foreground">Especialidade</th>
-                  <th className="h-12 px-4 text-left align-middle font-medium text-muted-foreground">Escala</th>
+                  <th className="h-12 px-4 text-left align-middle font-medium text-muted-foreground">Telefone</th>
                   <th className="h-12 px-4 text-center align-middle font-medium text-muted-foreground">Ações</th>
                 </tr>
               </thead>
               <tbody className="[&_tr:last-child]:border-0">
-                {medicosFiltrados.length === 0 ? (
+                {loading ? (
+                  <tr className="border-b">
+                    <td colSpan={5} className="h-32 text-center">
+                      <div className="flex flex-col items-center justify-center text-muted-foreground">
+                        <p className="text-lg font-medium">Carregando médicos...</p>
+                      </div>
+                    </td>
+                  </tr>
+                ) : medicosFiltrados.length === 0 ? (
                   <tr className="border-b">
                     <td colSpan={5} className="h-32 text-center">
                       <div className="flex flex-col items-center justify-center text-muted-foreground">
@@ -166,8 +214,8 @@ function AdminPainelPage() {
                     </td>
                   </tr>
                 ) : (
-                  medicosFiltrados.map((med, idx) => (
-                    <tr key={idx} className="border-b transition-colors hover:bg-muted/50">
+                  medicosFiltrados.map((med) => (
+                    <tr key={med.id} className="border-b transition-colors hover:bg-muted/50">
                       <td className="p-4 align-middle">
                         <div className="flex items-center gap-3">
                           <Avatar>
@@ -180,11 +228,9 @@ function AdminPainelPage() {
                       </td>
                       <td className="p-4 align-middle text-foreground">{med.crm}</td>
                       <td className="p-4 align-middle">
-                        <Badge variant="secondary">{med.especialidade}</Badge>
+                        <Badge variant="secondary">{getEspecialidadeNome(med)}</Badge>
                       </td>
-                      <td className="p-4 align-middle">
-                        <Badge variant="outline">{med.escala}</Badge>
-                      </td>
+                      <td className="p-4 align-middle text-foreground">{med.telefone}</td>
                       <td className="p-4 align-middle text-right">
                         <div className="flex justify-end gap-2">
                           <Button
@@ -237,6 +283,7 @@ function AdminPainelPage() {
                 type="button"
                 variant="outline"
                 onClick={handleDeleteCancel}
+                disabled={deleting}
               >
                 Cancelar
               </Button>
@@ -244,8 +291,9 @@ function AdminPainelPage() {
                 type="button"
                 variant="destructive"
                 onClick={handleDeleteConfirm}
+                disabled={deleting}
               >
-                Remover
+                {deleting ? 'Removendo...' : 'Remover'}
               </Button>
             </DialogFooter>
           </DialogContent>
