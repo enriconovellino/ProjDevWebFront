@@ -11,11 +11,23 @@ import {
 } from "@/components/ui/navigation-menu"
 import { cn } from "@/lib/utils"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+import {
+  DropdownMenu,
+  DropdownMenuTrigger,
+  DropdownMenuContent,
+  DropdownMenuItem,
+} from "@/components/ui/dropdown-menu"
+import { DropdownMenuGroup } from '@radix-ui/react-dropdown-menu'
+import { ArrowLeftFromLine, CircleUserRound, Settings } from 'lucide-react'
+import { useNavigate } from '@tanstack/react-router'
+import { useAuth } from '@/hooks/useAuth'
+
 
 interface NavItem {
   title: string
   href: string
 }
+
 
 const navItems: NavItem[] = [
   {
@@ -24,17 +36,34 @@ const navItems: NavItem[] = [
   },
   {
     title: "Pacientes",
-    href: "/sign-in"
+    href: "/not-found"
   },
   {
     title: "Atendimentos",
-    href: "/servicos"
+    href: "/not-found"
   },
-  
+
 ]
 
 export function NavBar() {
   const [activeLink, setActiveLink] = useState("/")
+  const navigate = useNavigate()
+  const { user, logout } = useAuth()
+
+  const handleLogout = () => {
+    logout()
+    navigate({ to: '/sign-in' })
+  }
+
+  // Gera as iniciais do usuário para o avatar
+  const getUserInitials = () => {
+    if (!user?.nome) return 'U'
+    const names = user.nome.split(' ')
+    if (names.length >= 2) {
+      return `${names[0][0]}${names[1][0]}`.toUpperCase()
+    }
+    return names[0][0].toUpperCase()
+  }
 
   return (
     <>
@@ -71,12 +100,41 @@ export function NavBar() {
               ))}
             </NavigationMenuList>
           </NavigationMenu>
-
-         <Avatar>
-          <AvatarImage src="https://github.com/shadcn.png" alt="@shadcn" />
-          <AvatarFallback>CN</AvatarFallback>
-        </Avatar>
-          
+        <DropdownMenu>
+            <DropdownMenuTrigger className="cursor-pointer">
+              <Avatar>
+                <AvatarImage src="" alt={user?.nome || 'Usuário'} />
+                <AvatarFallback>{getUserInitials()}</AvatarFallback>
+              </Avatar>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent className="w-56 m-4 bg-[var(--background)] rounded-lg p-2  ">
+              <div className="px-3 py-2 text-sm">
+                <p className="font-medium">{user?.nome || 'Usuário'}</p>
+                <p className="text-xs text-gray-500">{user?.email || ''}</p>
+              </div>
+              <DropdownMenuGroup className='flex  items-center hover:bg-[var(--primary)]/8 rounded-md  ' >
+                <DropdownMenuItem className='cursor-pointer' onClick={() => navigate({ to: '/profile' })}>
+                <CircleUserRound width={20} />
+                  Perfil
+                </DropdownMenuItem>
+              </DropdownMenuGroup>
+               <DropdownMenuGroup className='flex  items-center hover:bg-[var(--primary)]/8 rounded-md '>
+                <DropdownMenuItem className='cursor-pointer' onClick={() => navigate({ to: '/settings-adm' })}>
+                  <Settings width={20} />
+                  Configurações
+                </DropdownMenuItem>
+              </DropdownMenuGroup>
+               <DropdownMenuGroup>
+                <DropdownMenuItem
+                  className= 'cursor-pointer text-red-600 hover:bg-red-500/10 hover:text-red-700'
+                  onClick={handleLogout}
+                >
+                <ArrowLeftFromLine width={20} />
+                  Log out
+                </DropdownMenuItem>
+              </DropdownMenuGroup>
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
       </nav>
       <Separator className='mb-20' />
