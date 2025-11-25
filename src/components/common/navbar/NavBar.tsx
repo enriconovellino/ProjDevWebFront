@@ -36,7 +36,7 @@ const navItems: NavItem[] = [
   },
   {
     title: "Pacientes",
-    href: "/not-found"
+    href: "/admin-painel-pacientes"
   },
   {
     title: "Atendimentos",

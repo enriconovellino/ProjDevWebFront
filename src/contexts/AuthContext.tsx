@@ -20,7 +20,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
   // Verifica se há usuário logado ao carregar a aplicação
   useEffect(() => {
-    const initAuth = async () => {
+    const initAuth = () => {
       try {
         const storedToken = authService.getToken();
         const storedUser = authService.getUser();
@@ -28,25 +28,10 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         if (storedToken && storedUser) {
           setToken(storedToken);
           setUser(storedUser);
-
-          // Valida o token buscando o perfil do usuário
-          try {
-            const currentUser = await authService.getPerfil();
-            setUser(currentUser);
-            authService.saveAuth(storedToken, currentUser);
-          } catch (error) {
-            // Token inválido, faz logout
-            console.error('Token inválido:', handleApiError(error));
-            authService.clearAuth();
-            setUser(null);
-            setToken(null);
-          }
+          // Não valida o token automaticamente para evitar requisições extras
         }
       } catch (error) {
         console.error('Erro ao inicializar autenticação:', error);
-        authService.clearAuth();
-        setUser(null);
-        setToken(null);
       } finally {
         setLoading(false);
       }
@@ -76,30 +61,25 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     setUser(null);
   };
 
+  // Função para atualizar usuário
+  const updateUser = (updatedUser: Usuario): void => {
+    setUser(updatedUser);
+    if (token) {
+      authService.saveAuth(token, updatedUser);
+    }
+  };
+
   const value: AuthContextType = {
     user,
     token,
     loading,
     login,
     logout,
+    setUser: updateUser,
     isAuthenticated: !!user && !!token,
   };
 
-  // Exibe loading enquanto inicializa
-  if (loading) {
-    return (
-      <div style={{
-        display: 'flex',
-        justifyContent: 'center',
-        alignItems: 'center',
-        height: '100vh',
-        fontSize: '1.2rem',
-        color: '#666'
-      }}>
-        Carregando...
-      </div>
-    );
-  }
-
+  // O AuthProvider agora renderiza mesmo durante loading
+  // O ProtectedRoute cuidará de mostrar "Carregando..." se necessário
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 };

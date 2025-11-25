@@ -36,7 +36,9 @@ api.interceptors.response.use(
   (response) => {
     return response;
   },
-  (error: AxiosError) => {
+  async (error: AxiosError) => {
+    const originalRequest = error.config as any;
+
     // Token expirado ou inválido
     if (error.response?.status === 401) {
       // Limpa o token e redireciona para login
@@ -49,6 +51,18 @@ api.interceptors.response.use(
       }
     }
 
+    // Rate limit (429) - Tenta novamente após delay maior
+    if (error.response?.status === 429 && !originalRequest._retry) {
+      originalRequest._retry = true;
+
+      console.warn('Rate limit atingido. Aguardando 5 segundos antes de retentativa...');
+
+      // Aguarda 5 segundos antes de tentar novamente
+      await new Promise(resolve => setTimeout(resolve, 5000));
+
+      return api(originalRequest);
+    }
+
     return Promise.reject(error);
   }
 );
@@ -57,6 +71,11 @@ api.interceptors.response.use(
 export const handleApiError = (error: unknown): string => {
   if (axios.isAxiosError(error)) {
     const axiosError = error as AxiosError<{ message?: string; errors?: string[] }>;
+
+    // Rate limit
+    if (axiosError.response?.status === 429) {
+      return 'Servidor sobrecarregado. Por favor, aguarde 30 segundos e tente novamente.';
+    }
 
     // Erro de resposta do servidor
     if (axiosError.response?.data) {
@@ -80,7 +99,7 @@ export const handleApiError = (error: unknown): string => {
 
     // Erro de rede
     if (axiosError.message === 'Network Error') {
-      return 'Erro de conexão. Verifique sua internet ou se o servidor está online.';
+      return 'Erro de conexão. Verifique se o backend está rodando em http://localhost:3001';
     }
 
     // Erro genérico do Axios

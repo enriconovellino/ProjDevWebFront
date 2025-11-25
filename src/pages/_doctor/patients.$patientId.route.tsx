@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react'
-import { Outlet, createLazyFileRoute, Link, useParams } from '@tanstack/react-router'
+import { Outlet, Link, useParams, createFileRoute } from '@tanstack/react-router'
 // Importa os componentes de UI
 // CORREÇÃO: Caminho corrigido de ../../../ para ../../
 import { Avatar, AvatarFallback, AvatarImage } from "../../components/ui/avatar"
@@ -28,7 +28,7 @@ const MOCK_PATIENT_PROFILE: Patient = {
 
 // 1. Cria a rota de layout /_doctor/patients/$patientId
 // (O erro de TypeScript aqui é temporário)
-export const Route = createLazyFileRoute('/_doctor/patients/$patientId')({
+export const Route = createFileRoute('/_doctor/patients/$patientId')({
   component: PatientRecordLayout,
 })
 

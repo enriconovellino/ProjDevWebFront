@@ -15,6 +15,9 @@ export type Usuario = {
   perfil: Perfil;
   ativo: boolean;
   cpf: string;
+  telefone?: string;
+  endereco?: string;
+  dataNascimento?: string;
   criado_em?: string;
   atualizado_em?: string;
 }
@@ -51,5 +54,6 @@ export type AuthContextType = {
   loading: boolean;
   login: (credentials: LoginRequest) => Promise<void>;
   logout: () => void;
+  setUser: (user: Usuario) => void;
   isAuthenticated: boolean;
 }

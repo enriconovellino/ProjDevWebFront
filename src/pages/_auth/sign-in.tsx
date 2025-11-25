@@ -29,10 +29,36 @@ function SignIn() {
 
     try {
       await login({ email, senha })
-      // Redireciona para o painel administrativo após login bem-sucedido
-      navigate({ to: '/admin-painel' })
+      
+      // Pega o usuário do localStorage após o login (o login já salva lá)
+      const userStr = localStorage.getItem('user')
+      if (userStr) {
+        const userData = JSON.parse(userStr)
+        if (userData.perfil === 'ADMIN') {
+          navigate({ to: '/admin-painel' })
+        } else if (userData.perfil === 'MEDICO') {
+          navigate({ to: '/home' })
+        } else if (userData.perfil === 'PACIENTE') {
+          navigate({ to: '/dashboard' })
+        } else {
+          navigate({ to: '/sign-in' })
+        }
+      } else {
+        navigate({ to: '/sign-in' })
+      }
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Erro ao fazer login')
+      let errorMsg = 'Erro ao fazer login'
+      
+      if (err instanceof Error) {
+        errorMsg = err.message
+      }
+      
+      // Se for erro de conexão, mostra mensagem específica
+      if (errorMsg.includes('Network Error') || errorMsg.includes('conexão')) {
+        errorMsg = 'Erro de conexão. Verifique se o backend está rodando em http://localhost:3000'
+      }
+      
+      setError(errorMsg)
     } finally {
       setLoading(false)
     }

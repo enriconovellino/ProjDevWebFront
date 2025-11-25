@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
@@ -8,6 +8,8 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Label } from '@/components/ui/label'
 import { Badge } from '@/components/ui/badge'
 import { z } from 'zod'
+import { useAuth } from '@/hooks/useAuth'
+import { authService } from '@/services/auth.service'
 import {
   Save,
   Loader2,
@@ -18,7 +20,9 @@ import {
   Calendar,
   User,
   Briefcase,
-  Shield
+  Shield,
+  Eye,
+  EyeOff
 } from 'lucide-react'
 
 export const Route = createFileRoute('/_admin/profile')({
@@ -48,15 +52,31 @@ type ProfileFormData = z.infer<typeof profileSchema>
 type PasswordFormData = z.infer<typeof passwordSchema>
 
 function RouteComponent() {
+  const { user } = useAuth()
+
   // Estado para dados do perfil
   const [profileData, setProfileData] = useState<ProfileFormData>({
-    fullName: 'Carlos Pereira',
-    email: 'carlos.pereira@vitalis.com',
-    phone: '(11) 99876-5432',
-    address: 'Av. Paulista, 1000 - São Paulo, SP',
-    role: 'Administrador',
-    department: 'Gestão',
+    fullName: '',
+    email: '',
+    phone: '',
+    address: '',
+    role: '',
+    department: '',
   })
+
+  // Carrega dados do usuário logado
+  useEffect(() => {
+    if (user) {
+      setProfileData({
+        fullName: user.nome || '',
+        email: user.email || '',
+        phone: '', // Adicione este campo no tipo Usuario se necessário
+        address: '',
+        role: user.perfil === 'ADMIN' ? 'Administrador' : user.perfil === 'MEDICO' ? 'Médico' : 'Paciente',
+        department: user.perfil === 'ADMIN' ? 'Gestão' : user.perfil === 'MEDICO' ? 'Medicina' : 'Paciente',
+      })
+    }
+  }, [user])
 
   const [passwordData, setPasswordData] = useState<PasswordFormData>({
     currentPassword: '',
@@ -70,12 +90,19 @@ function RouteComponent() {
   const [isLoadingPassword, setIsLoadingPassword] = useState(false)
   const [successMessage, setSuccessMessage] = useState('')
   const [avatarUrl, setAvatarUrl] = useState('https://github.com/shadcn.png')
+  const [showCurrentPassword, setShowCurrentPassword] = useState(false)
+  const [showNewPassword, setShowNewPassword] = useState(false)
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false)
 
   // Informações adicionais do usuário
   const userInfo = {
-    memberSince: 'Janeiro 2022',
-    permissions: ['Gerenciar Pacientes', 'Gerenciar Médicos', 'Agendar Consultas', 'Configurações do Sistema', 'Gerenciar Usuários'],
-    status: 'Ativo',
+    memberSince: user?.criado_em ? new Date(user.criado_em).toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' }) : 'N/A',
+    permissions: user?.perfil === 'ADMIN'
+      ? ['Gerenciar Pacientes', 'Gerenciar Médicos', 'Agendar Consultas', 'Configurações do Sistema', 'Gerenciar Usuários']
+      : user?.perfil === 'MEDICO'
+      ? ['Visualizar Pacientes', 'Agendar Consultas', 'Gerenciar Prontuários', 'Visualizar Agenda']
+      : ['Agendar Consultas', 'Visualizar Consultas', 'Visualizar Prontuário'],
+    status: user?.ativo ? 'Ativo' : 'Inativo',
   }
 
   const handleProfileInputChange = (
@@ -109,11 +136,19 @@ function RouteComponent() {
     try {
       const validatedData = profileSchema.parse(profileData)
 
-      // Simulando uma chamada à API
-      await new Promise((resolve) => setTimeout(resolve, 1000))
+      // Chama a API para atualizar o perfil
+      await authService.updatePerfil({
+        nome: validatedData.fullName,
+        email: validatedData.email,
+      })
 
-      console.log('Dados do perfil válidos:', validatedData)
       setSuccessMessage('Perfil atualizado com sucesso!')
+
+      // Recarrega o perfil atualizado
+      const updatedUser = await authService.getPerfil()
+      if (updatedUser) {
+        authService.saveAuth(authService.getToken() || '', updatedUser)
+      }
     } catch (error) {
       if (error instanceof z.ZodError) {
         const fieldErrors: Record<string, string> = {}
@@ -125,7 +160,7 @@ function RouteComponent() {
         setProfileErrors(fieldErrors)
       } else {
         console.error('Erro ao salvar:', error)
-        setProfileErrors({ general: 'Erro ao atualizar o perfil' })
+        setProfileErrors({ general: 'Erro ao atualizar o perfil. Verifique sua conexão e tente novamente.' })
       }
     } finally {
       setIsLoadingProfile(false)
@@ -141,10 +176,12 @@ function RouteComponent() {
     try {
       const validatedData = passwordSchema.parse(passwordData)
 
-      // Simulando uma chamada à API
-      await new Promise((resolve) => setTimeout(resolve, 1000))
+      // Chama a API para alterar a senha
+      await authService.changePassword(
+        validatedData.currentPassword,
+        validatedData.newPassword
+      )
 
-      console.log('Senha atualizada:', validatedData)
       setSuccessMessage('Senha alterada com sucesso!')
       setPasswordData({
         currentPassword: '',
@@ -160,9 +197,11 @@ function RouteComponent() {
           }
         })
         setPasswordErrors(fieldErrors)
+      } else if (error instanceof Error && error.message === 'Senha atual incorreta') {
+        setPasswordErrors({ currentPassword: 'Senha atual está incorreta' })
       } else {
         console.error('Erro ao alterar senha:', error)
-        setPasswordErrors({ general: 'Erro ao alterar a senha' })
+        setPasswordErrors({ general: 'Erro ao alterar a senha. Tente novamente.' })
       }
     } finally {
       setIsLoadingPassword(false)
@@ -178,6 +217,20 @@ function RouteComponent() {
       }
       reader.readAsDataURL(file)
     }
+  }
+
+  // Guard de loading
+  if (!user) {
+    return (
+      <main className="container mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <div className="flex items-center justify-center min-h-[400px]">
+          <div className="text-center">
+            <Loader2 className="h-8 w-8 animate-spin mx-auto mb-4 text-primary" />
+            <p className="text-muted-foreground">Carregando dados do perfil...</p>
+          </div>
+        </div>
+      </main>
+    )
   }
 
   return (
@@ -413,15 +466,28 @@ function RouteComponent() {
                       <Label htmlFor="currentPassword">
                         Senha Atual <span className="text-red-500">*</span>
                       </Label>
-                      <Input
-                        id="currentPassword"
-                        name="currentPassword"
-                        type="password"
-                        value={passwordData.currentPassword}
-                        onChange={handlePasswordInputChange}
-                        placeholder="Digite sua senha atual"
-                        className={passwordErrors.currentPassword ? 'border-red-500' : ''}
-                      />
+                      <div className="relative">
+                        <Input
+                          id="currentPassword"
+                          name="currentPassword"
+                          type={showCurrentPassword ? 'text' : 'password'}
+                          value={passwordData.currentPassword}
+                          onChange={handlePasswordInputChange}
+                          placeholder="Digite sua senha atual"
+                          className={`pr-10 ${passwordErrors.currentPassword ? 'border-red-500' : ''}`}
+                        />
+                        <button
+                          type="button"
+                          onClick={() => setShowCurrentPassword(!showCurrentPassword)}
+                          className="absolute right-3 top-3 text-muted-foreground hover:text-foreground transition-colors"
+                        >
+                          {showCurrentPassword ? (
+                            <EyeOff className="h-4 w-4" />
+                          ) : (
+                            <Eye className="h-4 w-4" />
+                          )}
+                        </button>
+                      </div>
                       {passwordErrors.currentPassword && (
                         <p className="text-sm text-red-500">
                           {passwordErrors.currentPassword}
@@ -433,15 +499,28 @@ function RouteComponent() {
                       <Label htmlFor="newPassword">
                         Nova Senha <span className="text-red-500">*</span>
                       </Label>
-                      <Input
-                        id="newPassword"
-                        name="newPassword"
-                        type="password"
-                        value={passwordData.newPassword}
-                        onChange={handlePasswordInputChange}
-                        placeholder="Digite sua nova senha"
-                        className={passwordErrors.newPassword ? 'border-red-500' : ''}
-                      />
+                      <div className="relative">
+                        <Input
+                          id="newPassword"
+                          name="newPassword"
+                          type={showNewPassword ? 'text' : 'password'}
+                          value={passwordData.newPassword}
+                          onChange={handlePasswordInputChange}
+                          placeholder="Digite sua nova senha"
+                          className={`pr-10 ${passwordErrors.newPassword ? 'border-red-500' : ''}`}
+                        />
+                        <button
+                          type="button"
+                          onClick={() => setShowNewPassword(!showNewPassword)}
+                          className="absolute right-3 top-3 text-muted-foreground hover:text-foreground transition-colors"
+                        >
+                          {showNewPassword ? (
+                            <EyeOff className="h-4 w-4" />
+                          ) : (
+                            <Eye className="h-4 w-4" />
+                          )}
+                        </button>
+                      </div>
                       {passwordErrors.newPassword && (
                         <p className="text-sm text-red-500">{passwordErrors.newPassword}</p>
                       )}
@@ -451,15 +530,28 @@ function RouteComponent() {
                       <Label htmlFor="confirmPassword">
                         Confirmar Nova Senha <span className="text-red-500">*</span>
                       </Label>
-                      <Input
-                        id="confirmPassword"
-                        name="confirmPassword"
-                        type="password"
-                        value={passwordData.confirmPassword}
-                        onChange={handlePasswordInputChange}
-                        placeholder="Confirme sua nova senha"
-                        className={passwordErrors.confirmPassword ? 'border-red-500' : ''}
-                      />
+                      <div className="relative">
+                        <Input
+                          id="confirmPassword"
+                          name="confirmPassword"
+                          type={showConfirmPassword ? 'text' : 'password'}
+                          value={passwordData.confirmPassword}
+                          onChange={handlePasswordInputChange}
+                          placeholder="Confirme sua nova senha"
+                          className={`pr-10 ${passwordErrors.confirmPassword ? 'border-red-500' : ''}`}
+                        />
+                        <button
+                          type="button"
+                          onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                          className="absolute right-3 top-3 text-muted-foreground hover:text-foreground transition-colors"
+                        >
+                          {showConfirmPassword ? (
+                            <EyeOff className="h-4 w-4" />
+                          ) : (
+                            <Eye className="h-4 w-4" />
+                          )}
+                        </button>
+                      </div>
                       {passwordErrors.confirmPassword && (
                         <p className="text-sm text-red-500">
                           {passwordErrors.confirmPassword}

@@ -8,9 +8,11 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Switch } from '@/components/ui/switch'
 import { Checkbox } from '@/components/ui/checkbox'
 import { Badge } from '@/components/ui/badge'
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { z } from 'zod'
-import { Save, Loader2, UserPlus } from 'lucide-react'
+import { Save, Loader2, UserPlus, RefreshCw } from 'lucide-react'
+import { userService } from '@/services/user.service'
+import type { User as APIUser, UserPermissions } from '@/types/user.types'
 
 export const Route = createFileRoute('/_admin/settings-adm')({
   component: RouteComponent,
@@ -28,22 +30,6 @@ const clinicSettingsSchema = z.object({
 
 type ClinicSettingsFormData = z.infer<typeof clinicSettingsSchema>
 
-// Tipos para gerenciamento de usuários
-type UserPermissions = {
-  gerenciarPacientes: boolean
-  agendarConsultas: boolean
-  acessarRelatorios: boolean
-}
-
-type User = {
-  id: string
-  nome: string
-  email: string
-  cargo: string
-  status: boolean
-  permissions: UserPermissions
-}
-
 function RouteComponent() {
   const navigate = useNavigate()
   const [formData, setFormData] = useState<ClinicSettingsFormData>({
@@ -60,44 +46,38 @@ function RouteComponent() {
   const [successMessage, setSuccessMessage] = useState('')
 
   // Estado para gerenciamento de usuários
-  const [users, setUsers] = useState<User[]>([
-    {
-      id: '1',
-      nome: 'Dr. Ricardo Almeida',
-      email: 'ricardo.almeida@vitalis.com',
-      cargo: 'Médico',
-      status: true,
-      permissions: {
-        gerenciarPacientes: true,
-        agendarConsultas: true,
-        acessarRelatorios: true,
-      },
-    },
-    {
-      id: '2',
-      nome: 'Ana Silva',
-      email: 'ana.silva@vitalis.com',
-      cargo: 'Recepcionista',
-      status: true,
-      permissions: {
-        gerenciarPacientes: false,
-        agendarConsultas: true,
-        acessarRelatorios: false,
-      },
-    },
-    {
-      id: '3',
-      nome: 'Carlos Pereira',
-      email: 'carlos.pereira@vitalis.com',
-      cargo: 'Administrador',
-      status: true,
-      permissions: {
-        gerenciarPacientes: true,
-        agendarConsultas: true,
-        acessarRelatorios: true,
-      },
-    },
-  ])
+  const [users, setUsers] = useState<APIUser[]>([])
+  const [usersLoading, setUsersLoading] = useState(true)
+  const [usersError, setUsersError] = useState('')
+
+  // Carrega usuários ao montar o componente
+  useEffect(() => {
+    loadUsers()
+  }, [])
+
+  // Limpa mensagens de erro após 5 segundos
+  useEffect(() => {
+    if (usersError) {
+      const timer = setTimeout(() => {
+        setUsersError('')
+      }, 5000)
+      return () => clearTimeout(timer)
+    }
+  }, [usersError])
+
+  const loadUsers = async () => {
+    try {
+      setUsersLoading(true)
+      setUsersError('')
+      const usersData = await userService.list()
+      setUsers(usersData)
+    } catch (error) {
+      console.error('Erro ao carregar usuários:', error)
+      setUsersError('Erro ao carregar a lista de usuários. Tente novamente.')
+    } finally {
+      setUsersLoading(false)
+    }
+  }
 
   const handleInputChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
@@ -145,31 +125,66 @@ function RouteComponent() {
   }
 
   // Funções de gerenciamento de usuários
-  const handleToggleUserStatus = (userId: string) => {
-    setUsers((prevUsers) =>
-      prevUsers.map((user) =>
-        user.id === userId ? { ...user, status: !user.status } : user
+  const handleToggleUserStatus = async (userId: string) => {
+    try {
+      const user = users.find((u) => u.id === userId)
+      if (!user) return
+
+      const newStatus = !user.status
+
+      // Atualiza no backend
+      await userService.updateStatus(userId, newStatus)
+
+      // Atualiza localmente após sucesso
+      setUsers((prevUsers) =>
+        prevUsers.map((u) =>
+          u.id === userId ? { ...u, status: newStatus } : u
+        )
       )
-    )
+    } catch (error) {
+      console.error('Erro ao atualizar status:', error)
+      setUsersError('Erro ao atualizar status do usuário. Tente novamente.')
+    }
   }
 
-  const handleTogglePermission = (
+  const handleTogglePermission = async (
     userId: string,
     permission: keyof UserPermissions
   ) => {
-    setUsers((prevUsers) =>
-      prevUsers.map((user) =>
-        user.id === userId
-          ? {
-              ...user,
-              permissions: {
-                ...user.permissions,
-                [permission]: !user.permissions[permission],
-              },
-            }
-          : user
+    try {
+      const user = users.find((u) => u.id === userId)
+      if (!user) return
+
+      const updatedPermissions = {
+        ...user.permissions,
+        [permission]: !user.permissions[permission],
+      }
+
+      // Atualiza no backend
+      await userService.updatePermissions(userId, { permissions: updatedPermissions })
+
+      // Atualiza localmente após sucesso
+      setUsers((prevUsers) =>
+        prevUsers.map((u) =>
+          u.id === userId
+            ? { ...u, permissions: updatedPermissions }
+            : u
+        )
       )
-    )
+    } catch (error) {
+      console.error('Erro ao atualizar permissões:', error)
+      setUsersError('Erro ao atualizar permissões do usuário. Tente novamente.')
+    }
+  }
+
+  // Função auxiliar para traduzir cargos
+  const translateCargo = (cargo: string): string => {
+    const translations: Record<string, string> = {
+      'ADMIN': 'Administrador',
+      'MEDICO': 'Médico',
+      'PACIENTE': 'Paciente',
+    }
+    return translations[cargo] || cargo
   }
 
   return (
@@ -197,8 +212,35 @@ function RouteComponent() {
                   </Button>
                 </div>
 
-                <div className="border rounded-lg overflow-hidden">
-                  <Table>
+                {usersError && (
+                  <div className="p-4 bg-red-50 border border-red-200 rounded-md flex items-center justify-between">
+                    <p className="text-sm text-red-600">{usersError}</p>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={loadUsers}
+                      disabled={usersLoading}
+                    >
+                      <RefreshCw className="h-4 w-4 mr-2" />
+                      Tentar novamente
+                    </Button>
+                  </div>
+                )}
+
+                {usersLoading ? (
+                  <div className="flex items-center justify-center py-12">
+                    <div className="text-center">
+                      <Loader2 className="h-8 w-8 animate-spin mx-auto mb-4 text-primary" />
+                      <p className="text-muted-foreground">Carregando usuários...</p>
+                    </div>
+                  </div>
+                ) : users.length === 0 ? (
+                  <div className="text-center py-12 border rounded-lg bg-muted/20">
+                    <p className="text-muted-foreground">Nenhum usuário encontrado.</p>
+                  </div>
+                ) : (
+                  <div className="border rounded-lg overflow-hidden">
+                    <Table>
                     <TableHeader>
                       <TableRow className="bg-muted/50">
                         <TableHead className="font-semibold">Nome</TableHead>
@@ -220,7 +262,7 @@ function RouteComponent() {
                             {user.email}
                           </TableCell>
                           <TableCell>
-                            <Badge variant="outline">{user.cargo}</Badge>
+                            <Badge variant="outline">{translateCargo(user.cargo)}</Badge>
                           </TableCell>
                           <TableCell className="text-center">
                             <div className="flex items-center justify-center gap-2">
@@ -303,7 +345,8 @@ function RouteComponent() {
                       ))}
                     </TableBody>
                   </Table>
-                </div>
+                  </div>
+                )}
               </div>
             </TabsContent>
 

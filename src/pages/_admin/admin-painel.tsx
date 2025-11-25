@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { Search, Filter, CirclePlus, AlertTriangle } from 'lucide-react'
+import { Search, Filter, CirclePlus, AlertTriangle, RefreshCw } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Card } from '@/components/ui/card'
@@ -42,7 +42,22 @@ function AdminPainelPage() {
     loadData()
   }, [])
 
-  const loadData = async () => {
+  // Limpa mensagens de erro após 5 segundos
+  useEffect(() => {
+    if (error) {
+      const timer = setTimeout(() => {
+        setError('')
+      }, 5000)
+      return () => clearTimeout(timer)
+    }
+  }, [error])
+
+  const loadData = async (forceRefresh: boolean = false) => {
+    // Se já tem dados e não é refresh forçado, não recarrega
+    if (!forceRefresh && medicos.length > 0) {
+      return
+    }
+
     setLoading(true)
     setError('')
 
@@ -137,8 +152,17 @@ function AdminPainelPage() {
 
           {/* Error Alert */}
           {error && (
-            <div className="bg-red-50 text-red-600 p-4 rounded-md">
-              {error}
+            <div className="bg-red-50 text-red-600 p-4 rounded-md flex items-center justify-between">
+              <span>{error}</span>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => loadData(true)}
+                disabled={loading}
+              >
+                <RefreshCw className="h-4 w-4 mr-2" />
+                Tentar novamente
+              </Button>
             </div>
           )}
 

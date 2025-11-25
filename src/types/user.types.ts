@@ -13,6 +13,9 @@ export type User = {
   cargo: 'ADMIN' | 'MEDICO' | 'PACIENTE';
   status: boolean;
   permissions: UserPermissions;
+  cpf?: string;
+  telefone?: string;
+  dataNascimento?: string;
 }
 
 export type CreateUserRequest = {
