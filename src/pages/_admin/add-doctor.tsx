@@ -1,9 +1,11 @@
 import { useState } from 'react'
-import { ArrowLeft, UserPlus } from 'lucide-react'
+import { ArrowLeft, UserPlus, Loader2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card'
 import { createFileRoute, useNavigate } from '@tanstack/react-router'
+import { medicoService } from '@/services/medico.service'
+import { toast } from 'sonner'
 
 export const Route = createFileRoute('/_admin/add-doctor')({
   component: AddDoctorPage,
@@ -15,6 +17,10 @@ type DoctorFormData = {
   specialty: string
   email: string
   phone: string
+  cpf: string
+  password: string
+  confirmPassword: string
+  duracao_minutos: number
   schedule: string
 }
 
@@ -30,12 +36,17 @@ const scheduleOptions = [
 
 function AddDoctorPage() {
   const navigate = useNavigate()
+  const [isLoading, setIsLoading] = useState(false)
   const [formData, setFormData] = useState<DoctorFormData>({
     fullName: '',
     crm: '',
     specialty: '',
     email: '',
     phone: '',
+    cpf: '',
+    password: '',
+    confirmPassword: '',
+    duracao_minutos: 30,
     schedule: '',
   })
 
@@ -45,17 +56,45 @@ function AddDoctorPage() {
     const { name, value } = e.target
     setFormData(prev => ({
       ...prev,
-      [name]: value,
+      [name]: name === 'duracao_minutos' ? parseInt(value) || 30 : value,
     }))
   }
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    // Aqui você adicionaria a lógica para salvar o médico
-    console.log('Doctor data:', formData)
 
-    // Após salvar com sucesso, redireciona para a página de listagem
-    navigate({ to: '/admin-painel' })
+    // Validações
+    if (formData.password !== formData.confirmPassword) {
+      toast.error('As senhas não coincidem')
+      return
+    }
+
+    if (formData.password.length < 6) {
+      toast.error('A senha deve ter no mínimo 6 caracteres')
+      return
+    }
+
+    setIsLoading(true)
+
+    try {
+      await medicoService.create({
+        email: formData.email,
+        senha: formData.password,
+        nome: formData.fullName,
+        cpf: formData.cpf,
+        telefone: formData.phone,
+        crm: formData.crm,
+        duracao_minutos: formData.duracao_minutos,
+      })
+
+      toast.success('Médico cadastrado com sucesso!')
+      navigate({ to: '/admin-painel' })
+    } catch (error: any) {
+      console.error('Erro ao criar médico:', error)
+      toast.error(error?.response?.data?.message || 'Erro ao cadastrar médico. Tente novamente.')
+    } finally {
+      setIsLoading(false)
+    }
   }
 
   const handleCancel = () => {
@@ -185,6 +224,29 @@ function AddDoctorPage() {
                 />
               </div>
 
+              {/* CPF Field */}
+              <div className="space-y-2">
+                <label
+                  htmlFor="cpf"
+                  className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                >
+                  CPF
+                </label>
+                <Input
+                  id="cpf"
+                  name="cpf"
+                  type="text"
+                  placeholder="000.000.000-00"
+                  value={formData.cpf}
+                  onChange={handleInputChange}
+                  required
+                  className="w-full"
+                />
+                <p className="text-xs text-muted-foreground">
+                  Formato: 000.000.000-00
+                </p>
+              </div>
+
               {/* Phone Field */}
               <div className="space-y-2">
                 <label
@@ -203,6 +265,76 @@ function AddDoctorPage() {
                   required
                   className="w-full"
                 />
+              </div>
+
+              {/* Password Field */}
+              <div className="space-y-2">
+                <label
+                  htmlFor="password"
+                  className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                >
+                  Senha
+                </label>
+                <Input
+                  id="password"
+                  name="password"
+                  type="password"
+                  placeholder="********"
+                  value={formData.password}
+                  onChange={handleInputChange}
+                  required
+                  minLength={6}
+                  className="w-full"
+                />
+                <p className="text-xs text-muted-foreground">
+                  Mínimo de 6 caracteres
+                </p>
+              </div>
+
+              {/* Confirm Password Field */}
+              <div className="space-y-2">
+                <label
+                  htmlFor="confirmPassword"
+                  className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                >
+                  Confirmar Senha
+                </label>
+                <Input
+                  id="confirmPassword"
+                  name="confirmPassword"
+                  type="password"
+                  placeholder="********"
+                  value={formData.confirmPassword}
+                  onChange={handleInputChange}
+                  required
+                  minLength={6}
+                  className="w-full"
+                />
+              </div>
+
+              {/* Duration Field */}
+              <div className="space-y-2">
+                <label
+                  htmlFor="duracao_minutos"
+                  className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                >
+                  Duração das Consultas (minutos)
+                </label>
+                <Input
+                  id="duracao_minutos"
+                  name="duracao_minutos"
+                  type="number"
+                  min="15"
+                  step="15"
+                  placeholder="30"
+                  value={formData.duracao_minutos}
+                  onChange={handleInputChange}
+                  required
+                  className="w-full"
+                />
+                <p className="text-xs text-muted-foreground">
+                  Tempo padrão de cada consulta (15, 30, 45, 60 minutos)
+                </p>
               </div>
 
               {/* Availability Section */}
@@ -241,16 +373,27 @@ function AddDoctorPage() {
                 type="button"
                 variant="outline"
                 onClick={handleCancel}
+                disabled={isLoading}
                 className="w-full sm:w-auto"
               >
                 Cancelar
               </Button>
               <Button
                 type="submit"
+                disabled={isLoading}
                 className="w-full sm:w-auto"
               >
-                <UserPlus className="mr-2 h-4 w-4" />
-                Adicionar Médico
+                {isLoading ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Cadastrando...
+                  </>
+                ) : (
+                  <>
+                    <UserPlus className="mr-2 h-4 w-4" />
+                    Adicionar Médico
+                  </>
+                )}
               </Button>
             </CardFooter>
           </form>

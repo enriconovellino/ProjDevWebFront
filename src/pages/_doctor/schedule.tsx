@@ -24,8 +24,16 @@ import {
   TableHeader,
   TableRow,
 } from "../../components/ui/table"
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "../../components/ui/dialog"
 import { Badge } from "../../components/ui/badge"
-import { Search, Loader2, Eye } from 'lucide-react'
+import { Search, Loader2, Eye, CheckCircle, XCircle } from 'lucide-react'
 import { format } from 'date-fns'
 import { ptBR } from 'date-fns/locale'
 import { useAuth } from '@/hooks/useAuth'
@@ -43,6 +51,9 @@ function SchedulePage() {
   const [consultas, setConsultas] = useState<Consulta[]>([])
   const [loading, setLoading] = useState(true)
   const [searchTerm, setSearchTerm] = useState('')
+  const [selectedConsulta, setSelectedConsulta] = useState<Consulta | null>(null)
+  const [actionType, setActionType] = useState<'confirm' | 'complete' | null>(null)
+  const [actionLoading, setActionLoading] = useState(false)
 
   useEffect(() => {
     fetchConsultas()
@@ -61,6 +72,36 @@ function SchedulePage() {
     } finally {
       setLoading(false)
     }
+  }
+
+  const handleAction = async () => {
+    if (!selectedConsulta || !actionType) return
+
+    try {
+      setActionLoading(true)
+
+      if (actionType === 'confirm') {
+        await consultaService.confirm(selectedConsulta.id)
+        toast.success('Consulta confirmada com sucesso!')
+      } else if (actionType === 'complete') {
+        await consultaService.update(selectedConsulta.id, { status: 'CONCLUIDA' })
+        toast.success('Consulta marcada como concluída!')
+      }
+
+      setSelectedConsulta(null)
+      setActionType(null)
+      fetchConsultas()
+    } catch (error) {
+      console.error('Erro ao executar ação:', error)
+      toast.error('Erro ao executar ação')
+    } finally {
+      setActionLoading(false)
+    }
+  }
+
+  const openActionDialog = (consulta: Consulta, type: 'confirm' | 'complete') => {
+    setSelectedConsulta(consulta)
+    setActionType(type)
   }
 
   const formatDate = (dateTime: string) => format(new Date(dateTime), "dd 'de' MMMM 'de' yyyy", { locale: ptBR })
@@ -190,14 +231,36 @@ function SchedulePage() {
                         </Badge>
                       </TableCell>
                       <TableCell className="text-right">
-                        <Link
-                          to="/patients/$patientId"
-                          params={{ patientId: consulta.pacienteId }}
-                          className="inline-flex items-center text-sm font-medium text-primary hover:underline"
-                        >
-                          <Eye className="h-4 w-4 mr-1" />
-                          Ver Detalhes
-                        </Link>
+                        <div className="flex items-center justify-end gap-2">
+                          {consulta.status !== 'CONFIRMADA' && consulta.status !== 'CONCLUIDA' && (
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => openActionDialog(consulta, 'confirm')}
+                              title="Confirmar consulta"
+                            >
+                              <CheckCircle className="h-4 w-4 text-green-600" />
+                            </Button>
+                          )}
+                          {consulta.status === 'CONFIRMADA' && (
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => openActionDialog(consulta, 'complete')}
+                              title="Marcar como concluída"
+                            >
+                              <CheckCircle className="h-4 w-4 text-blue-600" />
+                            </Button>
+                          )}
+                          <Link
+                            to="/patients/$patientId"
+                            params={{ patientId: consulta.pacienteId }}
+                            className="inline-flex items-center text-sm font-medium text-primary hover:underline"
+                          >
+                            <Eye className="h-4 w-4 mr-1" />
+                            Ver
+                          </Link>
+                        </div>
                       </TableCell>
                     </TableRow>
                   ))}
@@ -264,6 +327,49 @@ function SchedulePage() {
         </Card>
 
       </div>
+
+      {/* Action Dialog */}
+      <Dialog open={!!actionType} onOpenChange={() => { setActionType(null); setSelectedConsulta(null) }}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>
+              {actionType === 'confirm' && 'Confirmar Consulta'}
+              {actionType === 'complete' && 'Concluir Consulta'}
+            </DialogTitle>
+            <DialogDescription>
+              {actionType === 'confirm' &&
+                `Tem certeza que deseja confirmar a consulta com ${selectedConsulta?.paciente?.nome}?`}
+              {actionType === 'complete' &&
+                `Marcar a consulta com ${selectedConsulta?.paciente?.nome} como concluída?`}
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => { setActionType(null); setSelectedConsulta(null) }}
+              disabled={actionLoading}
+            >
+              Cancelar
+            </Button>
+            <Button
+              onClick={handleAction}
+              disabled={actionLoading}
+            >
+              {actionLoading ? (
+                <>
+                  <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                  Processando...
+                </>
+              ) : (
+                <>
+                  {actionType === 'confirm' && 'Confirmar'}
+                  {actionType === 'complete' && 'Concluir'}
+                </>
+              )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }

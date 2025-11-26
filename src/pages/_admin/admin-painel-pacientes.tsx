@@ -73,9 +73,20 @@ function AdminPainelPacientesPage() {
 
       // Carrega pacientes (filtra apenas usuários com cargo PACIENTE)
       const usuariosResponse = await userService.list()
+      console.log('📊 Total de usuários retornados da API:', usuariosResponse.length)
+
       const pacientesFiltered = usuariosResponse.filter(user => user.cargo === 'PACIENTE')
+      console.log('👥 Pacientes filtrados (cargo=PACIENTE):', pacientesFiltered.length)
+      console.log('📋 Dados dos pacientes:', pacientesFiltered)
+
       setPacientes(pacientesFiltered)
+
+      // Mostra aviso se não houver pacientes
+      if (pacientesFiltered.length === 0 && usuariosResponse.length > 0) {
+        console.warn('⚠️ Nenhum paciente encontrado. Verifique se há usuários com cargo=PACIENTE no banco de dados.')
+      }
     } catch (err) {
+      console.error('❌ Erro ao carregar pacientes:', err)
       setError(handleApiError(err))
     } finally {
       setLoading(false)
@@ -227,10 +238,23 @@ function AdminPainelPacientesPage() {
               ) : pacientesFiltrados.length === 0 ? (
                 <tr className="border-b">
                   <td colSpan={6} className="h-32 text-center">
-                    <div className="flex flex-col items-center justify-center text-muted-foreground">
+                    <div className="flex flex-col items-center justify-center text-muted-foreground gap-2">
                       <Search className="mb-3 h-12 w-12 opacity-40" />
-                      <p className="text-lg font-medium">Nenhum paciente encontrado</p>
-                      <p className="text-sm">Tente ajustar os filtros de busca</p>
+                      <p className="text-lg font-medium">
+                        {pacientes.length === 0
+                          ? 'Nenhum paciente cadastrado no sistema'
+                          : 'Nenhum paciente encontrado'}
+                      </p>
+                      <p className="text-sm">
+                        {pacientes.length === 0
+                          ? 'Adicione pacientes clicando no botão "Adicionar Paciente" acima'
+                          : 'Tente ajustar os filtros de busca'}
+                      </p>
+                      {pacientes.length === 0 && (
+                        <p className="text-xs mt-2 text-muted-foreground/70">
+                          (Verifique o console do navegador para mais detalhes)
+                        </p>
+                      )}
                     </div>
                   </td>
                 </tr>

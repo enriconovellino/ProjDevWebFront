@@ -1,12 +1,9 @@
-import React from 'react'
+import React, { useState, useEffect, FormEvent } from 'react'
 import { createFileRoute } from '@tanstack/react-router'
-
-// Importa os componentes shadcn/ui que vamos usar
 import { Button } from '../../components/ui/button'
 import { Input } from '../../components/ui/input'
 import { Label } from '../../components/ui/label'
 import { Separator } from '../../components/ui/separator'
-// Importações que vamos ADICIONAR DE VOLTA
 import {
   Tabs,
   TabsContent,
@@ -21,14 +18,58 @@ import {
   CardHeader,
   CardTitle,
 } from "../../components/ui/card"
+import { useAuth } from '../../hooks/useAuth'
+import { authService } from '../../services/auth.service'
+import { handleApiError } from '../../services/api'
 
-// 1. Cria a rota para esta página
 export const Route = createFileRoute('/_doctor/settings')({
-  component: SettingsPage, // Define o componente da página
+  component: SettingsPage,
 })
 
-// 2. Define o componente da página (Versão CORRETA com Tabs)
 function SettingsPage() {
+  const { user, setUser } = useAuth();
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
+  const [success, setSuccess] = useState('');
+
+  // Dados do perfil
+  const [nome, setNome] = useState('');
+  const [email, setEmail] = useState('');
+  const [telefone, setTelefone] = useState('');
+  const [endereco, setEndereco] = useState('');
+
+  // Carregar dados do usuário
+  useEffect(() => {
+    if (user) {
+      setNome(user.nome || '');
+      setEmail(user.email || '');
+      setTelefone(user.telefone || '');
+      setEndereco(user.endereco || '');
+    }
+  }, [user]);
+
+  const handleSubmit = async (e: FormEvent) => {
+    e.preventDefault();
+    setError('');
+    setSuccess('');
+    setLoading(true);
+
+    try {
+      const updatedUser = await authService.updatePerfil({
+        nome,
+        telefone,
+        endereco,
+      });
+
+      setUser(updatedUser);
+      setSuccess('Perfil atualizado com sucesso!');
+    } catch (err) {
+      const errorMsg = handleApiError(err);
+      setError(errorMsg);
+    } finally {
+      setLoading(false);
+    }
+  };
   return (
     // Container principal da página (igual à imagem nova)
     <div className="container mx-auto max-w-5xl p-6 py-10">
@@ -60,76 +101,72 @@ function SettingsPage() {
               </CardDescription>
             </CardHeader>
             <CardContent>
-              {/* O formulário (que já tínhamos) agora fica DENTRO do CardContent */}
-              <form className="space-y-8">
-                {/* Secção de Informações Pessoais */}
+              {error && (
+                <div className="bg-red-50 text-red-600 p-3 rounded-md mb-4">
+                  {error}
+                </div>
+              )}
+              {success && (
+                <div className="bg-green-50 text-green-600 p-3 rounded-md mb-4">
+                  {success}
+                </div>
+              )}
+              <form onSubmit={handleSubmit} className="space-y-8">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div className="space-y-2">
                     <Label htmlFor="nome">Nome</Label>
-                    <Input id="nome" placeholder="Dr. Ricardo Almeida" />
+                    <Input
+                      id="nome"
+                      value={nome}
+                      onChange={(e) => setNome(e.target.value)}
+                      placeholder="Dr. Ricardo Almeida"
+                      disabled={loading}
+                    />
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="especialidade">Especialidade</Label>
-                    <Input id="especialidade" placeholder="Cardiologia" />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="crm">CRM</Label>
-                    <Input id="crm" placeholder="123456-SP" />
+                    <Label htmlFor="email">Email</Label>
+                    <Input
+                      id="email"
+                      type="email"
+                      value={email}
+                      placeholder="email@exemplo.com"
+                      disabled
+                    />
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="telefone">Telefone</Label>
-                    <Input id="telefone" type="tel" placeholder="(11) 99999-9999" />
-                  </div>
-                  <div className="col-span-1 md:col-span-2 space-y-2">
-                    <Label htmlFor="email">Email</Label>
-                    <Input id="email" type="email" placeholder="ricardo.almeida@healthplus.com" />
+                    <Input
+                      id="telefone"
+                      type="tel"
+                      value={telefone}
+                      onChange={(e) => setTelefone(e.target.value)}
+                      placeholder="(11) 99999-9999"
+                      disabled={loading}
+                    />
                   </div>
                 </div>
 
                 <Separator />
 
-                {/* Secção de Endereço da Clínica */}
                 <div className="space-y-4">
-                  <h3 className="text-lg font-medium text-foreground">Endereço da Clínica</h3>
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-4">
-                    <div className="md:col-span-1 space-y-2">
-                      <Label htmlFor="cep">CEP</Label>
-                      <Input id="cep" placeholder="01000-000" />
-                    </div>
-                  </div>
+                  <h3 className="text-lg font-medium text-foreground">Endereço</h3>
                   <div className="space-y-2">
-                    <Label htmlFor="endereco">Endereço</Label>
-                    <Input id="endereco" placeholder="Av. Paulista" />
-                  </div>
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                    <div className="space-y-2">
-                      <Label htmlFor="numero">Número</Label>
-                      <Input id="numero" placeholder="1000" />
-                    </div>
-                    <div className="md:col-span-2 space-y-2">
-                      <Label htmlFor="complemento">Complemento</Label>
-                      <Input id="complemento" placeholder="Sala 502" />
-                    </div>
-                  </div>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div className="space-y-2">
-                      <Label htmlFor="bairro">Bairro</Label>
-                      <Input id="bairro" placeholder="Bela Vista" />
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="cidade">Cidade</Label>
-                      <Input id="cidade" placeholder="São Paulo" />
-                    </div>
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="estado">Estado</Label>
-                    <Input id="estado" placeholder="SP" />
+                    <Label htmlFor="endereco">Endereço Completo</Label>
+                    <Input
+                      id="endereco"
+                      value={endereco}
+                      onChange={(e) => setEndereco(e.target.value)}
+                      placeholder="Rua, número, complemento, bairro, cidade - UF"
+                      disabled={loading}
+                    />
                   </div>
                 </div>
               </form>
             </CardContent>
             <CardFooter className="border-t pt-6">
-              <Button>Salvar Alterações</Button>
+              <Button onClick={handleSubmit} disabled={loading}>
+                {loading ? 'Salvando...' : 'Salvar Alterações'}
+              </Button>
             </CardFooter>
           </Card>
         </TabsContent>

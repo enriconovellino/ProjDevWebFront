@@ -1,0 +1,303 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Teste API - Pacientes</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #333;
+        }
+        button {
+            background: #10b981;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 16px;
+            margin: 5px;
+        }
+        button:hover {
+            background: #059669;
+        }
+        .error {
+            background: #fee;
+            border: 1px solid #fcc;
+            color: #c33;
+            padding: 12px;
+            border-radius: 6px;
+            margin: 10px 0;
+        }
+        .success {
+            background: #efe;
+            border: 1px solid #cfc;
+            color: #393;
+            padding: 12px;
+            border-radius: 6px;
+            margin: 10px 0;
+        }
+        pre {
+            background: #f8f8f8;
+            padding: 15px;
+            border-radius: 6px;
+            overflow-x: auto;
+            border: 1px solid #ddd;
+        }
+        .info {
+            background: #e7f3ff;
+            border: 1px solid #b3d9ff;
+            color: #004085;
+            padding: 12px;
+            border-radius: 6px;
+            margin: 10px 0;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+        th, td {
+            border: 1px solid #ddd;
+            padding: 12px;
+            text-align: left;
+        }
+        th {
+            background: #f8f8f8;
+            font-weight: bold;
+        }
+        tr:hover {
+            background: #f5f5f5;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🧪 Teste API - Pacientes</h1>
+
+        <div class="info">
+            <strong>Instruções:</strong><br>
+            1. Faça login primeiro para obter o token<br>
+            2. Depois teste os endpoints de pacientes
+        </div>
+
+        <div style="margin: 20px 0;">
+            <input type="email" id="email" placeholder="Email" value="admin@admin.com" style="padding: 10px; margin-right: 10px; width: 250px;">
+            <input type="password" id="password" placeholder="Senha" value="Admin@123" style="padding: 10px; margin-right: 10px; width: 150px;">
+            <button onclick="login()">🔐 Login</button>
+        </div>
+
+        <div style="margin: 20px 0;">
+            <button onclick="testUsers()">📋 GET /api/users</button>
+            <button onclick="testPacientes()">👥 Filtrar Pacientes (cargo=PACIENTE)</button>
+            <button onclick="clearResults()">🗑️ Limpar</button>
+        </div>
+
+        <div id="results"></div>
+    </div>
+
+    <script>
+        const API_URL = 'http://localhost:3000/api';
+        let token = localStorage.getItem('token') || '';
+
+        function showMessage(message, type = 'info') {
+            const results = document.getElementById('results');
+            const div = document.createElement('div');
+            div.className = type;
+            div.textContent = message;
+            results.appendChild(div);
+        }
+
+        function showJSON(data, title = '') {
+            const results = document.getElementById('results');
+            if (title) {
+                const h3 = document.createElement('h3');
+                h3.textContent = title;
+                results.appendChild(h3);
+            }
+            const pre = document.createElement('pre');
+            pre.textContent = JSON.stringify(data, null, 2);
+            results.appendChild(pre);
+        }
+
+        function showTable(users) {
+            const results = document.getElementById('results');
+            const table = document.createElement('table');
+
+            const thead = document.createElement('thead');
+            thead.innerHTML = `
+                <tr>
+                    <th>ID</th>
+                    <th>Nome</th>
+                    <th>Email</th>
+                    <th>CPF</th>
+                    <th>Cargo</th>
+                    <th>Status</th>
+                </tr>
+            `;
+            table.appendChild(thead);
+
+            const tbody = document.createElement('tbody');
+            users.forEach(user => {
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td>${user.id}</td>
+                    <td>${user.nome}</td>
+                    <td>${user.email}</td>
+                    <td>${user.cpf || '-'}</td>
+                    <td><strong>${user.cargo}</strong></td>
+                    <td>${user.status ? '✅ Ativo' : '❌ Inativo'}</td>
+                `;
+                tbody.appendChild(tr);
+            });
+            table.appendChild(tbody);
+
+            results.appendChild(table);
+        }
+
+        async function login() {
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+
+            clearResults();
+            showMessage('🔄 Fazendo login...', 'info');
+
+            try {
+                const response = await fetch(`${API_URL}/auth/login`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ email, senha: password })
+                });
+
+                const data = await response.json();
+
+                if (!response.ok) {
+                    throw new Error(data.message || 'Erro no login');
+                }
+
+                token = data.data.token;
+                localStorage.setItem('token', token);
+                localStorage.setItem('user', JSON.stringify(data.data.usuario));
+
+                showMessage('✅ Login realizado com sucesso!', 'success');
+                showJSON(data.data.usuario, '👤 Usuário logado:');
+                showMessage(`🔑 Token salvo: ${token.substring(0, 30)}...`, 'info');
+            } catch (error) {
+                showMessage(`❌ Erro: ${error.message}`, 'error');
+                console.error('Erro no login:', error);
+            }
+        }
+
+        async function testUsers() {
+            if (!token) {
+                showMessage('⚠️ Faça login primeiro!', 'error');
+                return;
+            }
+
+            clearResults();
+            showMessage('🔄 Buscando usuários...', 'info');
+
+            try {
+                const response = await fetch(`${API_URL}/users`, {
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json',
+                    }
+                });
+
+                const data = await response.json();
+
+                if (!response.ok) {
+                    throw new Error(data.message || 'Erro ao buscar usuários');
+                }
+
+                showMessage(`✅ ${data.data.length} usuários encontrados`, 'success');
+                showJSON(data, '📋 Resposta completa da API:');
+
+                if (data.data.length > 0) {
+                    showTable(data.data);
+
+                    const cargos = {};
+                    data.data.forEach(user => {
+                        cargos[user.cargo] = (cargos[user.cargo] || 0) + 1;
+                    });
+
+                    showMessage(`📊 Distribuição por cargo: ${JSON.stringify(cargos)}`, 'info');
+                }
+            } catch (error) {
+                showMessage(`❌ Erro: ${error.message}`, 'error');
+                console.error('Erro ao buscar usuários:', error);
+            }
+        }
+
+        async function testPacientes() {
+            if (!token) {
+                showMessage('⚠️ Faça login primeiro!', 'error');
+                return;
+            }
+
+            clearResults();
+            showMessage('🔄 Buscando pacientes...', 'info');
+
+            try {
+                const response = await fetch(`${API_URL}/users`, {
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json',
+                    }
+                });
+
+                const data = await response.json();
+
+                if (!response.ok) {
+                    throw new Error(data.message || 'Erro ao buscar usuários');
+                }
+
+                // Filtra apenas pacientes
+                const pacientes = data.data.filter(user => user.cargo === 'PACIENTE');
+
+                showMessage(`✅ ${pacientes.length} pacientes encontrados de ${data.data.length} usuários totais`, 'success');
+
+                if (pacientes.length > 0) {
+                    showTable(pacientes);
+                    showJSON(pacientes, '👥 Dados dos pacientes:');
+                } else {
+                    showMessage('⚠️ Nenhum paciente encontrado no sistema!', 'error');
+                    showMessage('💡 Dica: Verifique se existem usuários com cargo=PACIENTE no banco de dados', 'info');
+                }
+            } catch (error) {
+                showMessage(`❌ Erro: ${error.message}`, 'error');
+                console.error('Erro ao buscar pacientes:', error);
+            }
+        }
+
+        function clearResults() {
+            document.getElementById('results').innerHTML = '';
+        }
+
+        // Mostra status do token ao carregar
+        window.addEventListener('load', () => {
+            if (token) {
+                showMessage(`🔑 Token encontrado no localStorage: ${token.substring(0, 30)}...`, 'info');
+            } else {
+                showMessage('⚠️ Nenhum token encontrado. Faça login primeiro.', 'info');
+            }
+        });
+    </script>
+</body>
+</html>
