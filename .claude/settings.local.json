@@ -3,7 +3,25 @@
     "allow": [
       "Bash(npm run dev:*)",
       "Bash(npm run build:*)",
-      "Bash(git rm:*)"
+      "Bash(git rm:*)",
+      "Bash(npx tsc:*)",
+      "Bash(find:*)",
+      "Bash(cat:*)",
+      "Bash(npx prisma migrate dev:*)",
+      "Bash(node create-doctor-user.js:*)",
+      "Bash(npm install:*)",
+      "Bash(node test-password-hash.js:*)",
+      "Bash(node test-login-backend.js:*)",
+      "Bash(findstr:*)",
+      "Bash(cd:*)",
+      "Bash(dir:*)",
+      "Bash(node create-doctor.js:*)",
+      "Bash(node create-test-appointments.js:*)",
+      "Bash(move create-test-appointments.js create-test-appointments.cjs)",
+      "Bash(node:*)",
+      "Bash(ren:*)",
+      "Bash(nul)",
+      "Bash(curl:*)"
     ],
     "deny": [],
     "ask": []

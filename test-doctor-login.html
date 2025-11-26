@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Teste Login Médico</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 50px auto;
+            padding: 20px;
+        }
+        .container {
+            border: 1px solid #ddd;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+        input {
+            width: 100%;
+            padding: 10px;
+            margin: 5px 0;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+        button {
+            background: #007bff;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        button:hover {
+            background: #0056b3;
+        }
+        .success {
+            background: #d4edda;
+            color: #155724;
+            padding: 10px;
+            border-radius: 4px;
+            margin: 10px 0;
+        }
+        .error {
+            background: #f8d7da;
+            color: #721c24;
+            padding: 10px;
+            border-radius: 4px;
+            margin: 10px 0;
+        }
+        pre {
+            background: #f5f5f5;
+            padding: 10px;
+            border-radius: 4px;
+            overflow-x: auto;
+        }
+    </style>
+</head>
+<body>
+    <h1>Teste de Login - Médico</h1>
+
+    <div class="container">
+        <h2>Credenciais do Médico</h2>
+        <p><strong>Email:</strong> medico@clinica.com</p>
+        <p><strong>Senha:</strong> Medico@123</p>
+    </div>
+
+    <div class="container">
+        <h2>Teste de Login</h2>
+        <label>Email:</label>
+        <input type="email" id="email" value="medico@clinica.com">
+
+        <label>Senha:</label>
+        <input type="password" id="senha" value="Medico@123">
+
+        <button onclick="testLogin()">Testar Login</button>
+        <button onclick="checkBackend()">Verificar Backend</button>
+
+        <div id="result"></div>
+    </div>
+
+    <div class="container">
+        <h2>Debug</h2>
+        <div id="debug"></div>
+    </div>
+
+    <script>
+        const API_URL = 'http://localhost:3000/api';
+
+        async function checkBackend() {
+            const resultDiv = document.getElementById('result');
+            const debugDiv = document.getElementById('debug');
+
+            try {
+                resultDiv.innerHTML = '<p>Verificando backend...</p>';
+
+                const response = await fetch(`${API_URL}/auth/login`, {
+                    method: 'OPTIONS'
+                });
+
+                resultDiv.innerHTML = '<div class="success">✓ Backend está respondendo!</div>';
+                debugDiv.innerHTML = `<pre>${JSON.stringify({
+                    status: response.status,
+                    headers: Object.fromEntries(response.headers)
+                }, null, 2)}</pre>`;
+
+            } catch (error) {
+                resultDiv.innerHTML = `<div class="error">✗ Erro ao conectar ao backend: ${error.message}</div>`;
+                debugDiv.innerHTML = `<pre>Erro: ${error}</pre>`;
+            }
+        }
+
+        async function testLogin() {
+            const email = document.getElementById('email').value;
+            const senha = document.getElementById('senha').value;
+            const resultDiv = document.getElementById('result');
+            const debugDiv = document.getElementById('debug');
+
+            resultDiv.innerHTML = '<p>Tentando fazer login...</p>';
+            debugDiv.innerHTML = '';
+
+            try {
+                const requestData = { email, senha };
+                debugDiv.innerHTML += `<h3>Request:</h3><pre>${JSON.stringify(requestData, null, 2)}</pre>`;
+
+                const response = await fetch(`${API_URL}/auth/login`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(requestData)
+                });
+
+                const data = await response.json();
+
+                debugDiv.innerHTML += `<h3>Response Status:</h3><pre>${response.status} ${response.statusText}</pre>`;
+                debugDiv.innerHTML += `<h3>Response Data:</h3><pre>${JSON.stringify(data, null, 2)}</pre>`;
+
+                if (response.ok) {
+                    resultDiv.innerHTML = '<div class="success">✓ Login realizado com sucesso!</div>';
+
+                    if (data.usuario) {
+                        debugDiv.innerHTML += `<h3>Usuário:</h3><pre>${JSON.stringify(data.usuario, null, 2)}</pre>`;
+
+                        if (data.usuario.perfil === 'MEDICO') {
+                            resultDiv.innerHTML += '<div class="success">✓ Perfil correto: MEDICO</div>';
+                        } else {
+                            resultDiv.innerHTML += `<div class="error">✗ Perfil incorreto: ${data.usuario.perfil}</div>`;
+                        }
+                    }
+
+                    if (data.token) {
+                        resultDiv.innerHTML += '<div class="success">✓ Token JWT recebido</div>';
+                        debugDiv.innerHTML += `<h3>Token:</h3><pre>${data.token.substring(0, 50)}...</pre>`;
+                    }
+                } else {
+                    resultDiv.innerHTML = `<div class="error">✗ Erro no login: ${data.message || 'Erro desconhecido'}</div>`;
+
+                    if (data.message) {
+                        if (data.message.includes('Email ou senha inválidos')) {
+                            resultDiv.innerHTML += '<div class="error">⚠ O usuário não foi encontrado ou a senha está incorreta</div>';
+                            resultDiv.innerHTML += '<div class="error">📋 Execute o SQL para criar o usuário: create-doctor-user.sql</div>';
+                        }
+                    }
+                }
+
+            } catch (error) {
+                resultDiv.innerHTML = `<div class="error">✗ Erro na requisição: ${error.message}</div>`;
+                debugDiv.innerHTML += `<h3>Erro:</h3><pre>${error.stack}</pre>`;
+
+                if (error.message.includes('Failed to fetch')) {
+                    resultDiv.innerHTML += '<div class="error">⚠ Backend não está respondendo. Verifique se está rodando em http://localhost:3000</div>';
+                }
+            }
+        }
+
+        // Verificar backend ao carregar a página
+        window.addEventListener('load', () => {
+            setTimeout(checkBackend, 500);
+        });
+    </script>
+</body>
+</html>

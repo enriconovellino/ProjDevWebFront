@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Teste de API - Sistema Clínica</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      max-width: 800px;
+      margin: 50px auto;
+      padding: 20px;
+      background-color: #f5f5f5;
+    }
+    .container {
+      background: white;
+      padding: 30px;
+      border-radius: 8px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+    h1 {
+      color: #333;
+      margin-bottom: 20px;
+    }
+    .test-section {
+      margin-bottom: 30px;
+      padding: 20px;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+    }
+    button {
+      background-color: #007bff;
+      color: white;
+      border: none;
+      padding: 10px 20px;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 16px;
+      margin-right: 10px;
+    }
+    button:hover {
+      background-color: #0056b3;
+    }
+    .success {
+      color: #28a745;
+      font-weight: bold;
+    }
+    .error {
+      color: #dc3545;
+      font-weight: bold;
+    }
+    pre {
+      background-color: #f8f9fa;
+      padding: 15px;
+      border-radius: 4px;
+      overflow-x: auto;
+      white-space: pre-wrap;
+      word-wrap: break-word;
+    }
+    input {
+      width: 100%;
+      padding: 8px;
+      margin-bottom: 10px;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>🧪 Teste de API - Sistema Clínica</h1>
+
+    <!-- Teste 1: Health Check -->
+    <div class="test-section">
+      <h2>1. Teste de Health Check</h2>
+      <p>Verifica se o backend está respondendo</p>
+      <button onclick="testHealth()">Testar /health</button>
+      <button onclick="testApiHealth()">Testar /api</button>
+      <div id="health-result"></div>
+    </div>
+
+    <!-- Teste 2: Login -->
+    <div class="test-section">
+      <h2>2. Teste de Login</h2>
+      <input type="email" id="email" placeholder="Email" value="admin@clinica.com">
+      <input type="password" id="senha" placeholder="Senha" value="Admin@123">
+      <button onclick="testLogin()">Testar Login</button>
+      <div id="login-result"></div>
+    </div>
+
+    <!-- Teste 3: CORS -->
+    <div class="test-section">
+      <h2>3. Teste de CORS</h2>
+      <p>Verifica se o CORS está configurado corretamente</p>
+      <button onclick="testCORS()">Testar CORS</button>
+      <div id="cors-result"></div>
+    </div>
+  </div>
+
+  <script>
+    const API_URL = 'http://localhost:3000';
+
+    async function testHealth() {
+      const resultDiv = document.getElementById('health-result');
+      resultDiv.innerHTML = '<p>Testando...</p>';
+
+      try {
+        const response = await fetch(`${API_URL}/health`);
+        const data = await response.json();
+
+        resultDiv.innerHTML = `
+          <p class="success">✅ Sucesso! Status: ${response.status}</p>
+          <pre>${JSON.stringify(data, null, 2)}</pre>
+        `;
+      } catch (error) {
+        resultDiv.innerHTML = `
+          <p class="error">❌ Erro!</p>
+          <pre>${error.message}</pre>
+        `;
+      }
+    }
+
+    async function testApiHealth() {
+      const resultDiv = document.getElementById('health-result');
+      resultDiv.innerHTML = '<p>Testando...</p>';
+
+      try {
+        const response = await fetch(`${API_URL}/api`);
+        const data = await response.json();
+
+        resultDiv.innerHTML = `
+          <p class="success">✅ Sucesso! Status: ${response.status}</p>
+          <pre>${JSON.stringify(data, null, 2)}</pre>
+        `;
+      } catch (error) {
+        resultDiv.innerHTML = `
+          <p class="error">❌ Erro!</p>
+          <pre>${error.message}</pre>
+        `;
+      }
+    }
+
+    async function testLogin() {
+      const resultDiv = document.getElementById('login-result');
+      const email = document.getElementById('email').value;
+      const senha = document.getElementById('senha').value;
+
+      resultDiv.innerHTML = '<p>Testando login...</p>';
+
+      try {
+        const response = await fetch(`${API_URL}/api/auth/login`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ email, senha })
+        });
+
+        const data = await response.json();
+
+        if (response.ok) {
+          resultDiv.innerHTML = `
+            <p class="success">✅ Login bem-sucedido! Status: ${response.status}</p>
+            <pre>${JSON.stringify(data, null, 2)}</pre>
+          `;
+        } else {
+          resultDiv.innerHTML = `
+            <p class="error">❌ Erro no login! Status: ${response.status}</p>
+            <pre>${JSON.stringify(data, null, 2)}</pre>
+          `;
+        }
+      } catch (error) {
+        resultDiv.innerHTML = `
+          <p class="error">❌ Erro de Rede!</p>
+          <pre>${error.message}</pre>
+          <p>Possíveis causas:</p>
+          <ul>
+            <li>Backend não está rodando</li>
+            <li>CORS não está configurado</li>
+            <li>URL incorreta</li>
+          </ul>
+        `;
+      }
+    }
+
+    async function testCORS() {
+      const resultDiv = document.getElementById('cors-result');
+      resultDiv.innerHTML = '<p>Testando CORS...</p>';
+
+      try {
+        const response = await fetch(`${API_URL}/api/auth/login`, {
+          method: 'OPTIONS',
+          headers: {
+            'Origin': window.location.origin,
+            'Access-Control-Request-Method': 'POST',
+            'Access-Control-Request-Headers': 'Content-Type'
+          }
+        });
+
+        const corsHeaders = {
+          'access-control-allow-origin': response.headers.get('access-control-allow-origin'),
+          'access-control-allow-methods': response.headers.get('access-control-allow-methods'),
+          'access-control-allow-headers': response.headers.get('access-control-allow-headers'),
+          'access-control-allow-credentials': response.headers.get('access-control-allow-credentials')
+        };
+
+        if (corsHeaders['access-control-allow-origin']) {
+          resultDiv.innerHTML = `
+            <p class="success">✅ CORS está configurado!</p>
+            <pre>${JSON.stringify(corsHeaders, null, 2)}</pre>
+          `;
+        } else {
+          resultDiv.innerHTML = `
+            <p class="error">❌ CORS NÃO está configurado!</p>
+            <p>Configure CORS no backend para permitir requisições de: ${window.location.origin}</p>
+            <p>Status: ${response.status}</p>
+          `;
+        }
+      } catch (error) {
+        resultDiv.innerHTML = `
+          <p class="error">❌ Erro ao testar CORS!</p>
+          <pre>${error.message}</pre>
+        `;
+      }
+    }
+  </script>
+</body>
+</html>

@@ -1,0 +1,61 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Dev Login Médico — Injeção Rápida</title>
+</head>
+<body style="font-family:Arial,Helvetica,sans-serif;padding:24px;">
+  <h1>Login Rápido (Dev)</h1>
+  <p>Este arquivo serve apenas para desenvolvimento. Ao clicar em <strong>Login como Médico</strong> ele salvará um token falso e o usuário com <code>perfil: 'MEDICO'</code> no <code>localStorage</code>.</p>
+
+  <label>Nome: <input id="nome" value="Dr. João Silva" /></label><br/><br/>
+  <label>Email: <input id="email" value="medico@clinica.com" /></label><br/><br/>
+  <label>Token (fake): <input id="token" value="dev-token-medico-123" size="40"/></label><br/><br/>
+
+  <button id="loginBtn">Login como Médico</button>
+  <button id="clearBtn" style="margin-left:12px">Limpar LocalStorage</button>
+
+  <pre id="status" style="margin-top:16px;background:#f6f6f6;padding:12px;border:1px solid #ddd"></pre>
+
+  <script>
+    const status = document.getElementById('status');
+    const loginBtn = document.getElementById('loginBtn');
+    const clearBtn = document.getElementById('clearBtn');
+
+    function show(msg){ status.textContent = msg; }
+
+    loginBtn.addEventListener('click', ()=>{
+      const nome = document.getElementById('nome').value;
+      const email = document.getElementById('email').value;
+      const token = document.getElementById('token').value;
+
+      const user = {
+        id: 9999,
+        nome,
+        email,
+        perfil: 'MEDICO',
+        ativo: true,
+        cpf: '98765432100'
+      };
+
+      localStorage.setItem('token', token);
+      localStorage.setItem('user', JSON.stringify(user));
+
+      show('LocalStorage atualizado. Token e usuário salvos.\n\nVocê será redirecionado para /_doctor/home em 1s...');
+
+      setTimeout(()=>{
+        window.location.href = '/_doctor/home';
+      }, 1000);
+    });
+
+    clearBtn.addEventListener('click', ()=>{
+      localStorage.removeItem('token');
+      localStorage.removeItem('user');
+      show('LocalStorage limpo.');
+    });
+
+    show('Pronto. Use este formulário para simular o login do médico.');
+  </script>
+</body>
+</html>
